@@ -55,15 +55,29 @@
                     </div>
 
                     <!-- Consumption -->
+                    @php
+                        $readings = $dailyReading->billingCycle->dailyReadings()
+                            ->orderBy('reading_date', 'asc')
+                            ->orderBy('reading_time', 'asc')
+                            ->get();
+                        $previousValue = $dailyReading->billingCycle->start_reading;
+                        foreach ($readings as $reading) {
+                            if ($reading->id == $dailyReading->id) {
+                                break;
+                            }
+                            $previousValue = $reading->reading_value;
+                        }
+                        $consumed = $dailyReading->reading_value - $previousValue;
+                    @endphp
                     <div class="text-center">
-                        @if($dailyReading->consumed_units > 0)
+                        @if($consumed > 0)
                             <div class="text-3xl font-bold text-green-600">
-                                +{{ number_format($dailyReading->consumed_units, 2) }}
+                                +{{ number_format($consumed, 2) }}
                             </div>
                             <div class="text-sm text-gray-500 mt-1">Consumed Since Previous</div>
-                        @elseif($dailyReading->consumed_units < 0)
+                        @elseif($consumed < 0)
                             <div class="text-3xl font-bold text-red-600">
-                                {{ number_format($dailyReading->consumed_units, 2) }}
+                                {{ number_format($consumed, 2) }}
                             </div>
                             <div class="text-sm text-gray-500 mt-1">Consumed Since Previous</div>
                         @else

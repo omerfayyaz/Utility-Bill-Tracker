@@ -2,7 +2,7 @@
     "name": "Utility Bill Logger",
     "short_name": "Utility Logger",
     "description": "Track your utility consumption daily with offline support",
-    "start_url": "/",
+    "start_url": "/daily-readings",
     "display": "standalone",
     "background_color": "#f9fafb",
     "theme_color": "#3b82f6",
