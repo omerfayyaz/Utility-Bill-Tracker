@@ -26,6 +26,31 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="font-sans antialiased bg-gray-50">
+    <!-- Splash Screen Overlay (PWA Standalone Only) -->
+    <div id="splash-screen" style="position:fixed;z-index:9999;inset:0;display:none;align-items:center;justify-content:center;background:#14532d;color:white;transition:opacity 0.7s;">
+        <div class="text-center">
+            <span class="block text-3xl font-bold tracking-wide mb-2">Utility Bill Tracker</span>
+            <span class="block text-lg font-light">Loading...</span>
+        </div>
+    </div>
+    <script>
+        function isStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        }
+        window.addEventListener('DOMContentLoaded', function() {
+            if (isStandalone() && !localStorage.getItem('pwaSplashShown')) {
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.style.display = 'flex';
+                    setTimeout(function() {
+                        splash.style.opacity = 0;
+                        setTimeout(() => splash.style.display = 'none', 700);
+                    }, 1200);
+                    localStorage.setItem('pwaSplashShown', '1');
+                }
+            }
+        });
+    </script>
     <div class="min-h-screen">
         <!-- Header -->
         <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
@@ -50,7 +75,7 @@
 
                         <h1 class="text-xl font-semibold text-gray-900">
                             <a href="{{ route('daily-readings.index') }}" class="hover:text-blue-600 transition-colors duration-150">
-                                Utility Logger
+                                <span class="text-lg font-semibold tracking-wide">UTILITY BILL TRACKER</span>
                             </a>
                         </h1>
                     </div>

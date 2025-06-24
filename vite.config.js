@@ -14,8 +14,8 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.ico', 'robots.txt', 'icons/icon.svg'],
             manifest: {
-                name: 'Utility Bill Logger',
-                short_name: 'UtilityLogger',
+                name: 'Utility Bill Tracker',
+                short_name: 'UtilityTracker',
                 description: 'Track your utility consumption daily with offline support',
                 theme_color: '#14532d',
                 background_color: '#f9fafb',
