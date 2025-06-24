@@ -94,6 +94,7 @@
                                    name="reading_date"
                                    id="reading_date"
                                    value="{{ old('reading_date', $dailyReading->reading_date->format('Y-m-d')) }}"
+                                   max="{{ now()->format('Y-m-d') }}"
                                    class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('reading_date') border-red-300 focus:ring-red-500 focus:border-red-500 @enderror"
                                    required>
                         </div>

@@ -8,13 +8,14 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class DailyReadingController extends Controller
 {
     public function index(): View
     {
-        $activeCycle = BillingCycle::where('is_active', true)->first();
+        $activeCycle = Auth::user()->billingCycles()->where('is_active', true)->first();
         $readings = collect();
 
         if ($activeCycle) {
@@ -27,9 +28,9 @@ class DailyReadingController extends Controller
         return view('daily-readings.index', compact('activeCycle', 'readings'));
     }
 
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
-        $activeCycle = BillingCycle::where('is_active', true)->first();
+        $activeCycle = Auth::user()->billingCycles()->where('is_active', true)->first();
 
         if (!$activeCycle) {
             return redirect()->route('billing-cycles.create')
@@ -43,14 +44,20 @@ class DailyReadingController extends Controller
     {
         $validated = $request->validate([
             'billing_cycle_id' => 'required|exists:billing_cycles,id',
-            'reading_date' => 'required|date',
+            'reading_date' => 'required|date|before_or_equal:today',
             'reading_time' => 'required|date_format:H:i',
             'reading_value' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
 
+        // Ensure the billing cycle belongs to the authenticated user
+        $billingCycle = Auth::user()->billingCycles()->find($validated['billing_cycle_id']);
+        if (!$billingCycle) {
+            abort(403);
+        }
+
         // Check if reading already exists for this date and time
-        $existingReading = DailyReading::where('billing_cycle_id', $validated['billing_cycle_id'])
+        $existingReading = $billingCycle->dailyReadings()
             ->where('reading_date', $validated['reading_date'])
             ->where('reading_time', $validated['reading_time'])
             ->first();
@@ -68,7 +75,7 @@ class DailyReadingController extends Controller
         }
 
         try {
-            DailyReading::create($validated);
+            Auth::user()->dailyReadings()->create($validated);
             return redirect()->route('daily-readings.index')
                 ->with('success', 'Daily reading added successfully!');
         } catch (QueryException $e) {
@@ -83,25 +90,40 @@ class DailyReadingController extends Controller
 
     public function show(DailyReading $dailyReading): View
     {
+        // Ensure user can only access their own readings
+        if ($dailyReading->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         return view('daily-readings.show', compact('dailyReading'));
     }
 
     public function edit(DailyReading $dailyReading): View
     {
+        // Ensure user can only access their own readings
+        if ($dailyReading->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         return view('daily-readings.edit', compact('dailyReading'));
     }
 
     public function update(Request $request, DailyReading $dailyReading): RedirectResponse
     {
+        // Ensure user can only access their own readings
+        if ($dailyReading->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
-            'reading_date' => 'required|date',
+            'reading_date' => 'required|date|before_or_equal:today',
             'reading_time' => 'required|date_format:H:i',
             'reading_value' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
 
         // Check if reading already exists for this date and time (excluding current reading)
-        $existingReading = DailyReading::where('billing_cycle_id', $dailyReading->billing_cycle_id)
+        $existingReading = $dailyReading->billingCycle->dailyReadings()
             ->where('reading_date', $validated['reading_date'])
             ->where('reading_time', $validated['reading_time'])
             ->where('id', '!=', $dailyReading->id)
@@ -135,15 +157,32 @@ class DailyReadingController extends Controller
 
     public function destroy(DailyReading $dailyReading): RedirectResponse
     {
+        // Ensure user can only access their own readings
+        if ($dailyReading->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Add debugging to ensure we're deleting the correct model
+        $readingId = $dailyReading->id;
+        $billingCycleId = $dailyReading->billing_cycle_id;
+        $readingValue = $dailyReading->reading_value;
+
+        \Log::info("Deleting daily reading", [
+            'reading_id' => $readingId,
+            'billing_cycle_id' => $billingCycleId,
+            'reading_value' => $readingValue,
+            'model_class' => get_class($dailyReading)
+        ]);
+
         $dailyReading->delete();
 
         return redirect()->route('daily-readings.index')
-            ->with('success', 'Daily reading deleted successfully!');
+            ->with('success', "Daily reading #{$readingId} (value: {$readingValue}) deleted successfully!");
     }
 
-    public function quickAdd(): View
+    public function quickAdd(): View|RedirectResponse
     {
-        $activeCycle = BillingCycle::where('is_active', true)->first();
+        $activeCycle = Auth::user()->billingCycles()->where('is_active', true)->first();
 
         if (!$activeCycle) {
             return redirect()->route('billing-cycles.create')
@@ -162,10 +201,16 @@ class DailyReadingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Ensure the billing cycle belongs to the authenticated user
+        $billingCycle = Auth::user()->billingCycles()->find($validated['billing_cycle_id']);
+        if (!$billingCycle) {
+            abort(403);
+        }
+
         $validated['reading_date'] = now()->toDateString();
 
         // Check if reading already exists for today at this time
-        $existingReading = DailyReading::where('billing_cycle_id', $validated['billing_cycle_id'])
+        $existingReading = $billingCycle->dailyReadings()
             ->where('reading_date', $validated['reading_date'])
             ->where('reading_time', $validated['reading_time'])
             ->first();
@@ -183,7 +228,7 @@ class DailyReadingController extends Controller
         }
 
         try {
-            DailyReading::create($validated);
+            Auth::user()->dailyReadings()->create($validated);
             return redirect()->route('daily-readings.index')
                 ->with('success', 'Today\'s reading added successfully!');
         } catch (QueryException $e) {
@@ -260,5 +305,36 @@ class DailyReadingController extends Controller
         }
 
         return null; // No validation error
+    }
+
+    public function offlineSync(Request $request)
+    {
+        $data = $request->all();
+        $items = is_array($data[0] ?? null) ? $data : [$data];
+        $synced = [];
+        $userId = Auth::id();
+
+        foreach ($items as $payload) {
+            if (!isset($payload['billing_cycle_id'])) continue;
+            // Only allow syncing to cycles owned by the user
+            $cycle = \App\Models\BillingCycle::where('id', $payload['billing_cycle_id'])->where('user_id', $userId)->first();
+            if (!$cycle) continue;
+            $record = DailyReading::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'billing_cycle_id' => $payload['billing_cycle_id'],
+                    'reading_date' => $payload['reading_date'],
+                    'reading_time' => $payload['reading_time'],
+                ],
+                array_merge($payload, ['user_id' => $userId])
+            );
+            $synced[] = $record;
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'synced' => $synced,
+            'syncedAt' => now(),
+        ]);
     }
 }

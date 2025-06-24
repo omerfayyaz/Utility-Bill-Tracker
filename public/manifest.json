@@ -1,0 +1,43 @@
+{
+    "name": "Utility Bill Logger",
+    "short_name": "Utility Logger",
+    "description": "Track your utility consumption daily with offline support",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f9fafb",
+    "theme_color": "#3b82f6",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "en",
+    "icons": [
+        {
+            "src": "/icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        }
+    ],
+    "categories": ["utilities", "productivity"],
+    "screenshots": [
+        {
+            "src": "/screenshots/mobile-1.png",
+            "sizes": "390x844",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Quick Add Reading",
+            "short_name": "Add Reading",
+            "description": "Quickly add a new reading",
+            "url": "/daily-readings/quick-add"
+        },
+        {
+            "name": "View Readings",
+            "short_name": "Readings",
+            "description": "View all readings",
+            "url": "/daily-readings"
+        }
+    ]
+}

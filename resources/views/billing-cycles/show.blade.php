@@ -8,16 +8,37 @@
                     Billing cycle details and readings
                 </p>
             </div>
-            <div class="mt-4 sm:mt-0 flex space-x-3">
-                <a href="{{ route('daily-readings.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Add Reading
-                </a>
-                <a href="{{ route('billing-cycles.edit', $billingCycle) }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    Edit
-                </a>
+            <div class="mt-4 sm:mt-0" style="display: flex; justify-content: space-between; flex-direction: row-reverse;">
+
+                <form action="{{ route('billing-cycles.destroy', $billingCycle) }}" method="POST" class="inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="inline-flex items-center px-4 py-2 !bg-red-600 !text-white border border-transparent rounded-lg font-semibold text-xs uppercase tracking-widest hover:!bg-red-700 focus:!bg-red-700 active:!bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                        style="background-color: rgb(220 38 38) !important; color: white !important;"
+                        onclick="return confirm('Are you sure you want to delete this billing cycle? This action cannot be undone.')"
+                        @if($billingCycle->dailyReadings->isNotEmpty()) disabled title="Cannot delete cycle with readings." @endif>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </form>
+                
+                @if($billingCycle->isActive())
+
+                    <a href="{{ route('billing-cycles.edit', $billingCycle) }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        Edit Cycle
+                    </a>
+
+                    <a href="{{ route('daily-readings.create', ['billing_cycle_id' => $billingCycle->id]) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Reading
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -97,7 +118,7 @@
                 <div class="p-5">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 {{ $billingCycle->is_active ? 'text-green-600' : 'text-gray-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-6 w-6 {{ $billingCycle->isActive() ? 'text-green-600' : 'text-gray-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
@@ -106,8 +127,8 @@
                                 <dt class="text-sm font-medium text-gray-500 truncate">
                                     Status
                                 </dt>
-                                <dd class="text-lg font-medium {{ $billingCycle->is_active ? 'text-green-600' : 'text-gray-600' }}">
-                                    {{ $billingCycle->is_active ? 'Active' : 'Inactive' }}
+                                <dd class="text-lg font-medium {{ $billingCycle->isActive() ? 'text-green-600' : 'text-gray-600' }}">
+                                    {{ $billingCycle->isActive() ? 'Active' : 'Inactive' }}
                                 </dd>
                             </dl>
                         </div>
@@ -230,16 +251,21 @@
                                         </div>
                                     </div>
                                     <div class="flex space-x-2">
-                                        <a href="{{ route('daily-readings.edit', $reading) }}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                                            Edit
-                                        </a>
-                                        <form action="{{ route('daily-readings.destroy', $reading) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium" onclick="return confirm('Are you sure you want to delete this reading?')">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        @if($billingCycle->isActive())
+                                            <a href="{{ route('daily-readings.edit', $reading) }}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">
+                                                Edit
+                                            </a>
+                                            <form action="{{ route('daily-readings.destroy', $reading) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium" onclick="return confirm('Are you sure you want to delete this reading? This action cannot be undone.')">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-gray-400 text-sm font-medium cursor-not-allowed">Edit</span>
+                                            <span class="text-gray-400 text-sm font-medium cursor-not-allowed">Delete</span>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -258,9 +284,15 @@
                             Get started by adding your first reading for this cycle.
                         </p>
                         <div class="mt-6">
-                            <a href="{{ route('daily-readings.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                Add First Reading
-                            </a>
+                            @if($billingCycle->isActive())
+                                <a href="{{ route('daily-readings.create', ['billing_cycle_id' => $billingCycle->id]) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                    Add First Reading
+                                </a>
+                            @else
+                                <span class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest cursor-not-allowed" title="You can only add readings to the active cycle.">
+                                    Add First Reading
+                                </span>
+                            @endif
                         </div>
                     </div>
                 @endif

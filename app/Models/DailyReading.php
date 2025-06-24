@@ -11,6 +11,7 @@ class DailyReading extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'billing_cycle_id',
         'reading_date',
         'reading_time',
@@ -23,6 +24,11 @@ class DailyReading extends Model
         'reading_time' => 'datetime:H:i',
         'reading_value' => 'decimal:2',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function billingCycle(): BelongsTo
     {

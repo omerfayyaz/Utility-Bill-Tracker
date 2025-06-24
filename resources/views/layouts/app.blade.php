@@ -7,6 +7,17 @@
 
     <title>{{ config('app.name', 'Utility Bill Logger') }}</title>
 
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Utility Logger">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Track your utility consumption daily with offline support">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
@@ -17,30 +28,70 @@
 <body class="font-sans antialiased bg-gray-50">
     <div class="min-h-screen">
         <!-- Header -->
-        <header class="bg-white shadow-sm border-b border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4">
                 <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center">
+                    <div class="flex items-center space-x-4">
+                        <!-- Home Icon (shown on main index pages) -->
+                        @if(request()->routeIs('daily-readings.index') || request()->routeIs('billing-cycles.index'))
+                            <a href="{{ route('daily-readings.index') }}" class="flex items-center text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                </svg>
+                            </a>
+                        @else
+                            <!-- Back Button (shown on pages other than main index pages) -->
+                            <button onclick="history.back()" class="flex items-center text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                        @endif
+
                         <h1 class="text-xl font-semibold text-gray-900">
-                            <a href="{{ route('daily-readings.index') }}" class="hover:text-blue-600">
+                            <a href="{{ route('daily-readings.index') }}" class="hover:text-blue-600 transition-colors duration-150">
                                 Utility Logger
                             </a>
                         </h1>
                     </div>
-                    <nav class="flex space-x-4">
-                        <a href="{{ route('daily-readings.index') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                            Readings
-                        </a>
-                        <a href="{{ route('billing-cycles.index') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                            Cycles
-                        </a>
-                    </nav>
+
+                    <div class="flex items-center space-x-4">
+                        {{-- <nav class="flex space-x-4">
+                            <a href="{{ route('daily-readings.index') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 {{ request()->routeIs('daily-readings.*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                <span class="hidden">Readings</span>
+                                <span class="inline">📊</span>
+                            </a>
+                            <a href="{{ route('billing-cycles.index') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 {{ request()->routeIs('billing-cycles.*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                <span class="hidden">Cycles</span>
+                                <span class="inline">📅</span>
+                            </a>
+                            <a href="{{ route('daily-readings.quick-add') }}" class="text-blue-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 {{ request()->routeIs('daily-readings.quick-add') ? 'bg-blue-50' : '' }}">
+                                <span class="hidden">Quick Add</span>
+                                <span class="inline">➕</span>
+                            </a>
+                        </nav> --}}
+
+                        <!-- User Menu -->
+                        <div class="relative">
+                            <div class="flex items-center space-x-2">
+                                {{-- <span class="text-sm text-gray-700">{{ Auth::user()->name }}</span> --}}
+                                <form method="POST" action="{{ route('logout') }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-gray-600 hover:text-red-600 px-2 py-1 rounded text-sm font-medium transition-colors duration-150">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Page Content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main class="max-w-7xl mx-auto px-4 py-6">
             @if (session('success'))
                 <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
                     {{ session('success') }}
@@ -66,8 +117,8 @@
             {{ $slot }}
         </main>
 
-        <!-- Mobile Bottom Navigation -->
-        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
+        <!-- Mobile Bottom Navigation (Always Visible) -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
             <div class="flex justify-around py-2">
                 <a href="{{ route('daily-readings.index') }}" class="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-blue-600">
                     <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,8 +141,11 @@
             </div>
         </div>
 
-        <!-- Add padding for mobile bottom navigation -->
-        <div class="pb-20 md:pb-0"></div>
+        <!-- Add padding for mobile bottom navigation (Always Visible) -->
+        <div class="pb-20"></div>
     </div>
+
+    <!-- PWA Install Prompt -->
+    <x-pwa-install-prompt />
 </body>
 </html>

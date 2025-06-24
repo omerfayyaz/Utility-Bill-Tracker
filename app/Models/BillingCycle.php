@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BillingCycle extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'name',
         'start_date',
         'start_reading',
@@ -26,6 +28,11 @@ class BillingCycle extends Model
         'end_reading' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function dailyReadings(): HasMany
     {
@@ -55,5 +62,11 @@ class BillingCycle extends Model
     public function getDaysElapsedAttribute(): int
     {
         return $this->start_date->diffInDays(now());
+    }
+
+    public function isActive(): bool
+    {
+        // The active cycle is the one with the latest start_date.
+        return $this->is_active;
     }
 }
