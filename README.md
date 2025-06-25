@@ -1,61 +1,301 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Utility Bill Logger 📊
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern, progressive web application for tracking daily utility consumption. Built with Laravel and Tailwind CSS, this application helps users monitor their utility usage patterns and manage billing cycles effectively.
 
-## About Laravel
+![Utility Bill Logger](https://img.shields.io/badge/Laravel-12.x-red?style=flat-square&logo=laravel)
+![PHP](https://img.shields.io/badge/PHP-8.2+-blue?style=flat-square&logo=php)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=flat-square&logo=tailwind-css)
+![PWA](https://img.shields.io/badge/PWA-Ready-green?style=flat-square&logo=pwa)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 🔐 User Authentication
+- Secure user registration and login system
+- User-specific data isolation
+- Session management
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 📅 Billing Cycle Management
+- Create and manage multiple billing cycles
+- Set start and end dates for billing periods
+- Track cycle status (active/inactive)
+- Automatic consumption calculation
 
-## Learning Laravel
+### 📊 Daily Reading Tracking
+- Log daily utility readings with timestamps
+- Support for decimal precision (up to 2 decimal places)
+- Duplicate reading prevention
+- Reading validation (must be greater than previous readings)
+- Optional notes for each reading
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 🚀 Progressive Web App (PWA)
+- **Installable**: Add to home screen on mobile devices
+- **Responsive Design**: Optimized for all screen sizes
+- **Fast Loading**: Optimized performance and caching
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 📱 Mobile-First Design
+- Responsive UI built with Tailwind CSS
+- Touch-friendly interface
+- Quick add functionality for daily readings
+- Intuitive navigation
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🔍 Data Validation
+- Smart reading validation to prevent data inconsistencies
+- Duplicate time detection for same-day readings
+- Logical reading progression enforcement
+- User-friendly error messages with suggestions
 
-## Laravel Sponsors
+## 🛠️ Technology Stack
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **Backend**: Laravel 12.x (PHP 8.2+)
+- **Frontend**: Blade templates with Tailwind CSS 4.0
+- **Database**: SQLite (default), supports MySQL/PostgreSQL
+- **Build Tool**: Vite
+- **PWA**: Service Workers with Workbox
+- **Testing**: Pest PHP
 
-### Premium Partners
+## 📋 Prerequisites
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Before you begin, ensure you have the following installed:
+- **PHP** 8.2 or higher
+- **Composer** (PHP package manager)
+- **Node.js** 18+ and **npm**
+- **Git**
 
-## Contributing
+## 🚀 Installation
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Clone the Repository
+```bash
+git clone https://github.com/yourusername/utility-bill-logger.git
+cd utility-bill-logger
+```
 
-## Code of Conduct
+### 2. Install PHP Dependencies
+```bash
+composer install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3. Install Node.js Dependencies
+```bash
+npm install
+```
 
-## Security Vulnerabilities
+### 4. Environment Setup
+```bash
+# Copy environment file
+cp .env.example .env
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Generate application key
+php artisan key:generate
+```
 
-## License
+### 5. Database Setup
+```bash
+# Create SQLite database (default)
+touch database/database.sqlite
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Run migrations
+php artisan migrate
+
+# (Optional) Seed with sample data
+php artisan db:seed
+```
+
+### 6. Build Assets
+```bash
+# Development
+npm run dev
+
+# Production
+npm run build
+```
+
+### 7. Start the Development Server
+```bash
+# Using Laravel's built-in server
+php artisan serve
+
+# Or use the combined dev script
+composer run dev
+```
+
+The application will be available at `http://localhost:8000`
+
+## 📖 Usage
+
+### Getting Started
+
+1. **Register/Login**: Create an account or log in to access your dashboard
+2. **Create Billing Cycle**: Set up your first billing cycle with start date and initial reading
+3. **Add Daily Readings**: Start logging your daily utility consumption
+4. **Monitor Progress**: View your consumption patterns and billing cycle status
+
+### Key Features
+
+#### Billing Cycles
+- **Create**: Set up new billing periods with start dates and initial readings
+- **Manage**: Edit cycle details and mark cycles as active/inactive
+- **View**: See consumption totals and cycle progress
+
+#### Daily Readings
+- **Quick Add**: Fast entry for today's reading
+- **Detailed Entry**: Full form with date, time, value, and notes
+- **Validation**: Smart validation prevents data inconsistencies
+- **History**: View all readings with filtering and sorting
+
+#### PWA Features
+- **Install**: Add to home screen for app-like experience
+- **Responsive**: Optimized for mobile and desktop devices
+- **Fast**: Quick loading and smooth interactions
+
+## 🗄️ Database Schema
+
+### Users Table
+- `id` - Primary key
+- `name` - User's full name
+- `email` - Unique email address
+- `password` - Hashed password
+- `created_at`, `updated_at` - Timestamps
+
+### Billing Cycles Table
+- `id` - Primary key
+- `user_id` - Foreign key to users
+- `name` - Cycle name/description
+- `start_date` - Cycle start date
+- `start_reading` - Initial meter reading
+- `end_date` - Cycle end date (optional)
+- `end_reading` - Final meter reading (optional)
+- `is_active` - Active status boolean
+
+### Daily Readings Table
+- `id` - Primary key
+- `user_id` - Foreign key to users
+- `billing_cycle_id` - Foreign key to billing cycles
+- `reading_date` - Date of reading
+- `reading_time` - Time of reading
+- `reading_value` - Meter reading value
+- `notes` - Optional notes
+- `created_at`, `updated_at` - Timestamps
+
+## 🧪 Testing
+
+Run the test suite using Pest:
+
+```bash
+# Run all tests
+composer test
+
+# Run tests with coverage
+composer test -- --coverage
+```
+
+## 🚀 Deployment
+
+### Production Setup
+
+1. **Environment Configuration**
+   ```bash
+   # Set production environment
+   APP_ENV=production
+   APP_DEBUG=false
+   
+   # Configure database
+   DB_CONNECTION=mysql
+   DB_HOST=your-db-host
+   DB_DATABASE=your-db-name
+   DB_USERNAME=your-db-user
+   DB_PASSWORD=your-db-password
+   ```
+
+2. **Optimize for Production**
+   ```bash
+   # Cache configuration
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   
+   # Build assets
+   npm run build
+   ```
+
+3. **Web Server Configuration**
+   - Point web server to `public/` directory
+   - Ensure proper permissions on `storage/` and `bootstrap/cache/`
+   - Configure SSL for HTTPS
+
+### Docker Deployment
+
+```bash
+# Build and run with Docker
+docker build -t utility-bill-logger .
+docker run -p 8000:8000 utility-bill-logger
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+### 1. Fork the Repository
+Fork the project on GitHub and clone your fork locally.
+
+### 2. Create a Feature Branch
+```bash
+git checkout -b feature/amazing-feature
+```
+
+### 3. Make Your Changes
+- Follow Laravel coding standards
+- Write tests for new features
+- Update documentation as needed
+
+### 4. Test Your Changes
+```bash
+composer test
+npm run build
+```
+
+### 5. Submit a Pull Request
+- Provide a clear description of changes
+- Include screenshots for UI changes
+- Reference any related issues
+
+### Development Guidelines
+
+- **Code Style**: Follow PSR-12 and Laravel conventions
+- **Testing**: Write tests for new features and bug fixes
+- **Documentation**: Update README and inline documentation
+- **Commits**: Use conventional commit messages
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Laravel](https://laravel.com/) - The PHP framework for web artisans
+- [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework
+- [Pest](https://pestphp.com/) - An elegant PHP testing framework
+- [Vite](https://vitejs.dev/) - Next generation frontend tooling
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/utility-bill-logger/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/utility-bill-logger/discussions)
+- **Email**: your-email@example.com
+
+## 🗺️ Roadmap
+
+- [ ] **Data Export**: Export readings to CSV/PDF
+- [ ] **Charts & Analytics**: Visual consumption graphs
+- [ ] **Multi-utility Support**: Track different utility types
+- [ ] **Notifications**: Billing cycle reminders
+- [ ] **API**: RESTful API for mobile apps
+- [ ] **Multi-language**: Internationalization support
+- [ ] **Dark Mode**: Theme switching capability
+- [ ] **Data Backup**: Cloud backup integration
+- [ ] **Offline Support**: Work without internet connection
+
+---
+
+**Made with ❤️ by the Utility Bill Logger Team**
+
+If you find this project helpful, please consider giving it a ⭐ on GitHub!
