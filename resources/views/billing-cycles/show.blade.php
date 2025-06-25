@@ -185,117 +185,116 @@
 
         <!-- Readings List -->
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div class="px-4 py-5 sm:px-6">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">
-                    Daily Readings
+                    All Readings
                 </h3>
                 <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                    All readings for this billing cycle (multiple readings per day supported)
+                    Multiple readings per day are now supported
                 </p>
             </div>
-            <div class="border-t border-gray-200">
-                @if($billingCycle->dailyReadings->count() > 0)
-                    <ul class="divide-y divide-gray-200">
-                        @php
-                            $currentDate = null;
-                        @endphp
-                        @foreach($billingCycle->dailyReadings as $reading)
-                            @if($currentDate !== $reading->reading_date->format('Y-m-d'))
-                                @if($currentDate !== null)
-                                    </div> <!-- Close previous date group -->
-                                @endif
-                                @php
-                                    $currentDate = $reading->reading_date->format('Y-m-d');
-                                @endphp
-                                <li class="bg-gray-50">
-                                    <div class="px-4 py-3 sm:px-6">
-                                        <h4 class="text-sm font-medium text-gray-900">
-                                            {{ $reading->reading_date->format('l, M d, Y') }}
-                                        </h4>
-                                    </div>
-                                    <div class="space-y-1">
+            @if($billingCycle->dailyReadings->count() > 0)
+                <ul class="divide-y divide-gray-200">
+                    @php
+                        $items = [];
+                        $previousValue = $billingCycle->start_reading;
+                        foreach ($billingCycle->dailyReadings as $reading) {
+                            $consumed = $reading->reading_value - $previousValue;
+                            $items[] = (object)[
+                                'reading' => $reading,
+                                'consumed' => $consumed,
+                            ];
+                            $previousValue = $reading->reading_value;
+                        }
+                        $items = array_reverse($items);
+                        $currentDate = null;
+                    @endphp
+                    @foreach($items as $item)
+                        @if($currentDate !== $item->reading->reading_date->format('Y-m-d'))
+                            @if($currentDate !== null)
+                                </div> <!-- Close previous date group -->
                             @endif
+                            @php
+                                $currentDate = $item->reading->reading_date->format('Y-m-d');
+                            @endphp
+                            <li class="bg-gray-50">
+                                <div class="px-4 py-3 sm:px-6">
+                                    <h4 class="text-sm font-medium text-gray-900">
+                                        {{ $item->reading->reading_date->format('l, M d, Y') }}
+                                    </h4>
+                                </div>
+                                <div class="space-y-1">
+                        @endif
 
-                            <div class="px-4 py-3 sm:px-6 bg-white">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                                <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                            </div>
+                        <div class="px-4 py-3 sm:px-6 bg-white">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center flex-1 cursor-pointer" onclick="window.location.href='{{ route('daily-readings.show', $item->reading) }}'">
+                                    <div class="flex-shrink-0">
+                                        <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
                                         </div>
-                                        <div class="ml-3">
-                                            <div class="flex items-center">
-                                                <p class="text-sm font-medium text-gray-900">
-                                                    {{ $reading->reading_time->format('H:i') }}
-                                                </p>
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    {{ number_format($reading->reading_value, 2) }} units
-                                                </span>
-                                            </div>
-                                            <div class="mt-1 flex items-center text-sm text-gray-500">
-                                                @if($reading->consumed_units > 0)
-                                                    <p class="text-green-600">+{{ number_format($reading->consumed_units, 2) }} consumed</p>
-                                                @elseif($reading->consumed_units < 0)
-                                                    <p class="text-red-600">{{ number_format($reading->consumed_units, 2) }} consumed</p>
-                                                @else
-                                                    <p class="text-gray-500">No change</p>
-                                                @endif
-                                            </div>
-                                            @if($reading->notes)
-                                                <p class="mt-1 text-sm text-gray-500">{{ $reading->notes }}</p>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <div class="flex items-center">
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ $item->reading->reading_time->format('g:i A') }}
+                                            </p>
+                                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                {{ number_format($item->reading->reading_value, 2) }} units
+                                            </span>
+                                        </div>
+                                        <div class="mt-1 flex items-center text-sm text-gray-500">
+                                            @if($item->consumed > 0)
+                                                <p class="text-green-600">+{{ number_format($item->consumed, 2) }} consumed</p>
+                                            @elseif($item->consumed < 0)
+                                                <p class="text-red-600">{{ number_format($item->consumed, 2) }} consumed</p>
+                                            @else
+                                                <p class="text-gray-500">No change</p>
                                             @endif
                                         </div>
-                                    </div>
-                                    <div class="flex space-x-2">
-                                        @if($billingCycle->isActive())
-                                            <a href="{{ route('daily-readings.edit', $reading) }}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                                                Edit
-                                            </a>
-                                            <form action="{{ route('daily-readings.destroy', $reading) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium" onclick="return confirm('Are you sure you want to delete this reading? This action cannot be undone.')">
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        @else
-                                            <span class="text-gray-400 text-sm font-medium cursor-not-allowed">Edit</span>
-                                            <span class="text-gray-400 text-sm font-medium cursor-not-allowed">Delete</span>
+                                        @if($item->reading->notes)
+                                            <p class="mt-1 text-sm text-gray-500">{{ $item->reading->notes }}</p>
                                         @endif
                                     </div>
                                 </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
-                        @endforeach
-                        @if($currentDate !== null)
-                            </div> <!-- Close last date group -->
-                        @endif
-                    </ul>
-                @else
-                    <div class="px-4 py-8 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No readings yet</h3>
-                        <p class="mt-1 text-sm text-gray-500">
-                            Get started by adding your first reading for this cycle.
-                        </p>
-                        <div class="mt-6">
-                            @if($billingCycle->isActive())
-                                <a href="{{ route('daily-readings.create', ['billing_cycle_id' => $billingCycle->id]) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                    Add First Reading
-                                </a>
-                            @else
-                                <span class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest cursor-not-allowed" title="You can only add readings to the active cycle.">
-                                    Add First Reading
-                                </span>
-                            @endif
                         </div>
+                    @endforeach
+                    @if($currentDate !== null)
+                        </div> <!-- Close last date group -->
+                    @endif
+                </ul>
+            @else
+                <div class="px-4 py-8 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No readings yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Get started by adding your first reading for this cycle.
+                    </p>
+                    <div class="mt-6">
+                        @if($billingCycle->isActive())
+                            <a href="{{ route('daily-readings.create', ['billing_cycle_id' => $billingCycle->id]) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                Add First Reading
+                            </a>
+                        @else
+                            <span class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest cursor-not-allowed" title="You can only add readings to the active cycle.">
+                                Add First Reading
+                            </span>
+                        @endif
                     </div>
-                @endif
-            </div>
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

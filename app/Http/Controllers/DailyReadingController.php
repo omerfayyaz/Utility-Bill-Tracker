@@ -177,7 +177,7 @@ class DailyReadingController extends Controller
         $dailyReading->delete();
 
         return redirect()->route('daily-readings.index')
-            ->with('success', "Daily reading #{$readingId} (value: {$readingValue}) deleted successfully!");
+            ->with('success', "Daily reading deleted successfully!");
     }
 
     public function quickAdd(): View|RedirectResponse

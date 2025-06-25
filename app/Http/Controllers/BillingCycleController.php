@@ -52,7 +52,8 @@ class BillingCycleController extends Controller
         }
 
         $billingCycle->load(['dailyReadings' => function ($query) {
-            $query->orderBy('reading_date', 'desc');
+            $query->orderBy('reading_date', 'asc')
+                  ->orderBy('reading_time', 'asc');
         }]);
 
         return view('billing-cycles.show', compact('billingCycle'));

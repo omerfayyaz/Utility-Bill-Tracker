@@ -40,7 +40,7 @@
                     {{ $dailyReading->reading_date->format('l, M d, Y') }}
                 </h3>
                 <p class="text-sm text-gray-500">
-                    {{ $dailyReading->reading_time->format('H:i') }}
+                    {{ $dailyReading->reading_time->format('g:i A') }}
                 </p>
             </div>
 

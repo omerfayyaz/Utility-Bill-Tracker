@@ -1,29 +1,15 @@
 <x-app-layout>
     <div class="space-y-6">
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+
+        @if(!$activeCycle)
             <div>
                 <h2 class="text-2xl font-bold text-gray-900">Daily Readings</h2>
                 <p class="mt-1 text-sm text-gray-600">
                     Track your utility consumption daily
                 </p>
             </div>
-            @if($activeCycle)
-            <div class="mt-4 sm:mt-0 flex space-x-3">
-                <a href="{{ route('daily-readings.quick-add') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Quick Add
-                </a>
-                <a href="{{ route('daily-readings.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    Add Reading
-                </a>
-            </div>
-            @endif
-        </div>
 
-        @if(!$activeCycle)
             <!-- No Active Cycle -->
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
                 <div class="flex">
@@ -52,15 +38,20 @@
             <div class="bg-white overflow-hidden shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
                     <div class="flex items-center justify-between">
-                        <div>
+                        <div class="text-center w-full">
                             <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                Active Cycle: {{ $activeCycle->name }}
+                                Active Cycle
+                            </h3>
+                            <h3 class="text-3xl leading-6 font-medium text-gray-900 mt-2 mb-3">
+                                {{ $activeCycle->name }}
                             </h3>
                             <p class="mt-1 text-sm text-gray-500">
                                 Started {{ $activeCycle->start_date->format('M d, Y') }} with {{ number_format($activeCycle->start_reading, 2) }} units
                             </p>
                         </div>
-                        <div class="text-right">
+                    </div>
+                    <div class="flex items-center justify-between w-full mt-3">
+                        <div class="text-center w-full">
                             <p class="text-2xl font-bold text-blue-600">
                                 {{ number_format($activeCycle->current_reading, 2) }}
                             </p>
@@ -78,9 +69,30 @@
                             <p class="text-lg font-semibold text-gray-900">
                                 {{ $activeCycle->days_elapsed }}
                             </p>
-                            <p class="text-sm text-gray-500">Days Elapsed</p>
+                            <p class="text-sm text-gray-500">Days Passed</p>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Daily Readings</h2>
+                <p class="mt-1 text-sm text-gray-600">
+                    Track your utility consumption daily
+                </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div class="sm:mt-0 flex space-x-3">
+                    <a style="width: 50%" href="{{ route('daily-readings.quick-add') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Quick Add
+                    </a>
+                    <a style="width: 50%" href="{{ route('daily-readings.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        Add Old Reading
+                    </a>
                 </div>
             </div>
 
@@ -140,7 +152,7 @@
                                         <div class="ml-3 flex-1">
                                             <div class="flex items-center">
                                                 <p class="text-sm font-medium text-gray-900">
-                                                    {{ $item->reading->reading_time->format('H:i') }}
+                                                    {{ $item->reading->reading_time->format('g:i A') }}
                                                 </p>
                                                 <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                                     {{ number_format($item->reading->reading_value, 2) }} units
