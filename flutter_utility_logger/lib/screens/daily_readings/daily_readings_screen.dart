@@ -19,14 +19,6 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Daily Readings'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.dailyReadingCreate);
-            },
-          ),
-        ],
       ),
       body: Consumer2<DailyReadingProvider, BillingCycleProvider>(
         builder: (context, dailyReadingProvider, billingCycleProvider, child) {
@@ -62,13 +54,6 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, AppRoutes.dailyReadingQuickAdd);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Quick Add'),
       ),
     );
   }
@@ -131,7 +116,7 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.dailyReadingQuickAdd);
+              Navigator.pushNamed(context, AppRoutes.dailyReadingCreate);
             },
             icon: const Icon(Icons.add),
             label: const Text('Add First Reading'),

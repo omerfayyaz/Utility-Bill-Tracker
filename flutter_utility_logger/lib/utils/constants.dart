@@ -11,7 +11,6 @@ class AppRoutes {
   static const String dailyReadingCreate = '/daily-readings/create';
   static const String dailyReadingEdit = '/daily-readings/edit';
   static const String dailyReadingShow = '/daily-readings/show';
-  static const String dailyReadingQuickAdd = '/daily-readings/quick-add';
   static const String profile = '/profile';
   static const String settings = '/settings';
 }
@@ -30,8 +29,6 @@ class ApiEndpoints {
 
   // Daily readings endpoints
   static const String dailyReadings = '/api/daily-readings';
-  static const String dailyReadingsQuickAdd = '/quick-add';
-  static const String dailyReadingsQuickStore = '/quick-add';
 }
 
 class AppConstants {

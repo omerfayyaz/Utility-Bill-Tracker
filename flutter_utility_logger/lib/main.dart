@@ -8,7 +8,6 @@ import 'package:utility_bill_logger/screens/auth/register_screen.dart';
 import 'package:utility_bill_logger/screens/dashboard/dashboard_screen.dart';
 import 'package:utility_bill_logger/screens/billing_cycles/billing_cycle_create_screen.dart';
 import 'package:utility_bill_logger/screens/daily_readings/daily_reading_create_screen.dart';
-import 'package:utility_bill_logger/screens/daily_readings/daily_reading_quick_add_screen.dart';
 import 'package:utility_bill_logger/screens/billing_cycles/billing_cycle_edit_screen.dart';
 import 'package:utility_bill_logger/screens/billing_cycles/billing_cycle_show_screen.dart';
 import 'package:utility_bill_logger/screens/daily_readings/daily_reading_edit_screen.dart';
@@ -47,8 +46,6 @@ class UtilityBillLoggerApp extends StatelessWidget {
               const BillingCycleCreateScreen(),
           AppRoutes.dailyReadingCreate: (context) =>
               const DailyReadingCreateScreen(),
-          AppRoutes.dailyReadingQuickAdd: (context) =>
-              const DailyReadingQuickAddScreen(),
           AppRoutes.billingCycleEdit: (context) =>
               const BillingCycleEditScreen(),
           AppRoutes.billingCycleShow: (context) =>

@@ -40,7 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: _screens[_mapNavIndexToScreenIndex(_currentIndex)],
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pushNamed(context, AppRoutes.dailyReadingQuickAdd);
+          Navigator.pushNamed(context, AppRoutes.dailyReadingCreate);
         },
         backgroundColor: AppTheme.primaryColor,
         elevation: 6,
@@ -348,7 +348,19 @@ class HomeTab extends StatelessWidget {
                     ),
               ),
               const SizedBox(height: 16),
-              _buildQuickActions(context),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.dailyReadingCreate);
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Add New Reading'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
 
               const SizedBox(height: 24),
 
@@ -546,70 +558,6 @@ class HomeTab extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ],
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildQuickActionCard(
-            context,
-            'Quick Add',
-            'Add today\'s reading',
-            Icons.add_circle_outline,
-            AppTheme.primaryColor,
-            () {
-              Navigator.pushNamed(context, AppRoutes.dailyReadingQuickAdd);
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildQuickActionCard(
-            context,
-            'Add Reading',
-            'Add reading for any date',
-            Icons.edit_calendar,
-            AppTheme.secondaryColor,
-            () {
-              Navigator.pushNamed(context, AppRoutes.dailyReadingCreate);
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickActionCard(
-    BuildContext context,
-    String title,
-    String subtitle,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(icon, size: 32, color: color),
-              const SizedBox(height: 8),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

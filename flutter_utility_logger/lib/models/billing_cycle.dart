@@ -13,6 +13,9 @@ class BillingCycle {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<DailyReading> dailyReadings;
+  final double? currentReading;
+  final double? totalConsumedUnits;
+  final int? daysElapsed;
 
   BillingCycle({
     required this.id,
@@ -26,6 +29,9 @@ class BillingCycle {
     required this.createdAt,
     required this.updatedAt,
     this.dailyReadings = const [],
+    this.currentReading,
+    this.totalConsumedUnits,
+    this.daysElapsed,
   });
 
   factory BillingCycle.fromJson(Map<String, dynamic> json) {
@@ -48,6 +54,13 @@ class BillingCycle {
               .map((reading) => DailyReading.fromJson(reading))
               .toList()
           : [],
+      currentReading: json['current_reading'] != null
+          ? double.parse(json['current_reading'].toString())
+          : null,
+      totalConsumedUnits: json['total_consumed_units'] != null
+          ? double.parse(json['total_consumed_units'].toString())
+          : null,
+      daysElapsed: json['days_elapsed'] ?? null,
     );
   }
 
@@ -67,7 +80,7 @@ class BillingCycle {
   }
 
   // Computed properties (mirroring Laravel model)
-  double get totalConsumedUnits {
+  double get totalConsumedUnitsComputed {
     final latestReading = dailyReadings.isNotEmpty
         ? dailyReadings.reduce((a, b) => a.readingDate.isAfter(b.readingDate) ||
                 (a.readingDate.isAtSameMomentAs(b.readingDate) &&
@@ -80,7 +93,7 @@ class BillingCycle {
     return latestReading.readingValue - startReading;
   }
 
-  double get currentReading {
+  double get currentReadingComputed {
     if (dailyReadings.isEmpty) return startReading;
 
     final latestReading = dailyReadings.reduce((a, b) =>
@@ -93,9 +106,16 @@ class BillingCycle {
     return latestReading.readingValue;
   }
 
-  int get daysElapsed {
+  int get daysElapsedComputed {
     return DateTime.now().difference(startDate).inDays;
   }
+
+  // Use API values when available, fall back to computed values
+  double get totalConsumedUnitsValue =>
+      totalConsumedUnits ?? totalConsumedUnitsComputed;
+  double get currentReadingValue => currentReading ?? currentReadingComputed;
+  int get daysElapsedValue =>
+      daysElapsed != null ? daysElapsed! : daysElapsedComputed;
 
   bool isActiveCycle() {
     return isActive;
@@ -110,9 +130,9 @@ class BillingCycle {
   String get formattedEndReading =>
       endReading != null ? NumberFormat('#,##0.00').format(endReading!) : '';
   String get formattedCurrentReading =>
-      NumberFormat('#,##0.00').format(currentReading);
+      NumberFormat('#,##0.00').format(currentReadingValue);
   String get formattedTotalConsumed =>
-      NumberFormat('#,##0.00').format(totalConsumedUnits);
+      NumberFormat('#,##0.00').format(totalConsumedUnitsValue);
 
   BillingCycle copyWith({
     int? id,
@@ -126,6 +146,9 @@ class BillingCycle {
     DateTime? createdAt,
     DateTime? updatedAt,
     List<DailyReading>? dailyReadings,
+    double? currentReading,
+    double? totalConsumedUnits,
+    int? daysElapsed,
   }) {
     return BillingCycle(
       id: id ?? this.id,
@@ -139,6 +162,9 @@ class BillingCycle {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       dailyReadings: dailyReadings ?? this.dailyReadings,
+      currentReading: currentReading ?? this.currentReading,
+      totalConsumedUnits: totalConsumedUnits ?? this.totalConsumedUnits,
+      daysElapsed: daysElapsed ?? this.daysElapsed,
     );
   }
 

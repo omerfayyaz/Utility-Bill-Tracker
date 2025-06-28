@@ -15,7 +15,7 @@ class DailyReadingCreateScreen extends StatefulWidget {
 
 class _DailyReadingCreateScreenState extends State<DailyReadingCreateScreen> {
   final _formKey = GlobalKey<FormState>();
-  DateTime? _readingDate;
+  DateTime? _readingDate = DateTime.now();
   TimeOfDay _readingTime = TimeOfDay.now();
   final _readingValueController = TextEditingController();
   final _notesController = TextEditingController();

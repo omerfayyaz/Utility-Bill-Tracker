@@ -148,7 +148,9 @@ class _BillingCyclesScreenState extends State<BillingCyclesScreen> {
                             Expanded(
                               child: Text(
                                 cycle.name,
-                                style: Theme.of(context).textTheme.titleMedium
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
                                     ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -176,7 +178,9 @@ class _BillingCyclesScreenState extends State<BillingCyclesScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${cycle.formattedStartDate} - ${cycle.formattedEndDate}',
-                          style: Theme.of(context).textTheme.bodySmall
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
                               ?.copyWith(color: Colors.grey[600]),
                         ),
                       ],
@@ -279,8 +283,8 @@ class _BillingCyclesScreenState extends State<BillingCyclesScreen> {
               // Progress Bar
               if (cycle.isActive) ...[
                 LinearProgressIndicator(
-                  value: cycle.daysElapsed > 0
-                      ? (cycle.daysElapsed / 30).clamp(
+                  value: cycle.daysElapsedValue > 0
+                      ? (cycle.daysElapsedValue / 30).clamp(
                           0.0,
                           1.0,
                         ) // Assuming 30-day cycles
@@ -292,7 +296,7 @@ class _BillingCyclesScreenState extends State<BillingCyclesScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${cycle.daysElapsed} days elapsed',
+                  '${cycle.daysElapsedValue} days elapsed',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
