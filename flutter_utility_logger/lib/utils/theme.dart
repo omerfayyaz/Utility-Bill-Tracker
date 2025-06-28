@@ -2,42 +2,40 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Colors
-  static const Color primaryColor = Color(0xFF3B82F6);
-  static const Color primaryDarkColor = Color(0xFF1D4ED8);
-  static const Color secondaryColor = Color(0xFF10B981);
-  static const Color accentColor = Color(0xFFF59E0B);
-  static const Color errorColor = Color(0xFFEF4444);
+  static const Color primaryColor = Color(0xFF2563EB); // Web blue
+  static const Color primaryDarkColor = Color(0xFF1E40AF);
+  static const Color secondaryColor = Color(0xFF64748B); // Soft gray
+  static const Color accentColor =
+      Color(0xFFF1F5F9); // Light gray for backgrounds
+  static const Color errorColor = Color(0xFFEF4444); // Red
   static const Color warningColor = Color(0xFFF59E0B);
-  static const Color successColor = Color(0xFF10B981);
-  static const Color infoColor = Color(0xFF3B82F6);
+  static const Color successColor = Color(0xFF22C55E); // Green
+  static const Color infoColor = Color(0xFF2563EB);
 
   // Light Theme Colors
-  static const Color lightBackground = Color(0xFFF9FAFB);
-  static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightPrimary = Color(0xFF3B82F6);
+  static const Color lightBackground = Color(0xFFFFFFFF); // White
+  static const Color lightSurface = Color(0xFFF8FAFC); // Card background
+  static const Color lightPrimary = Color(0xFF2563EB);
   static const Color lightOnPrimary = Color(0xFFFFFFFF);
-  static const Color lightSecondary = Color(0xFF6B7280);
+  static const Color lightSecondary = Color(0xFF64748B);
   static const Color lightOnSecondary = Color(0xFFFFFFFF);
   static const Color lightError = Color(0xFFEF4444);
   static const Color lightOnError = Color(0xFFFFFFFF);
-  static const Color lightText = Color(0xFF111827);
-  static const Color lightTextSecondary = Color(0xFF6B7280);
+  static const Color lightText = Color(0xFF111827); // Black
+  static const Color lightTextSecondary = Color(0xFF64748B); // Soft gray
   static const Color lightBorder = Color(0xFFE5E7EB);
-  static const Color lightDivider = Color(0xFFF3F4F6);
+  static const Color lightDivider = Color(0xFFF1F5F9);
 
-  // Dark Theme Colors
-  static const Color darkBackground = Color(0xFF111827);
-  static const Color darkSurface = Color(0xFF1F2937);
-  static const Color darkPrimary = Color(0xFF60A5FA);
-  static const Color darkOnPrimary = Color(0xFF000000);
-  static const Color darkSecondary = Color(0xFF9CA3AF);
-  static const Color darkOnSecondary = Color(0xFF000000);
-  static const Color darkError = Color(0xFFF87171);
-  static const Color darkOnError = Color(0xFF000000);
-  static const Color darkText = Color(0xFFF9FAFB);
-  static const Color darkTextSecondary = Color(0xFFD1D5DB);
-  static const Color darkBorder = Color(0xFF374151);
-  static const Color darkDivider = Color(0xFF374151);
+  // Card Theme
+  static final CardThemeData cardTheme = CardThemeData(
+    color: lightSurface,
+    elevation: 1.5,
+    shadowColor: Color(0x1A000000),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+  );
 
   // Light Theme
   static final ThemeData lightTheme = ThemeData(
@@ -55,30 +53,24 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: lightBackground,
     appBarTheme: const AppBarTheme(
-      backgroundColor: lightSurface,
+      backgroundColor: lightBackground,
       foregroundColor: lightText,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: TextStyle(
         color: lightText,
         fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
       ),
+      iconTheme: IconThemeData(color: lightText),
     ),
-    cardTheme: CardThemeData(
-      color: lightSurface,
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    ),
+    cardTheme: cardTheme,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: lightPrimary,
         foregroundColor: lightOnPrimary,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -92,7 +84,7 @@ class AppTheme {
       style: OutlinedButton.styleFrom(
         foregroundColor: lightPrimary,
         side: const BorderSide(color: lightPrimary),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -198,19 +190,33 @@ class AppTheme {
         color: lightTextSecondary,
       ),
     ),
-    dividerTheme: const DividerThemeData(
-      color: lightDivider,
-      thickness: 1,
-      space: 1,
-    ),
+    dividerColor: lightDivider,
+    iconTheme: const IconThemeData(color: lightSecondary),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: lightSurface,
+      backgroundColor: lightBackground,
       selectedItemColor: lightPrimary,
-      unselectedItemColor: lightTextSecondary,
-      type: BottomNavigationBarType.fixed,
+      unselectedItemColor: lightSecondary,
+      selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500),
+      showUnselectedLabels: true,
       elevation: 8,
+      type: BottomNavigationBarType.fixed,
     ),
   );
+
+  // Dark Theme Colors
+  static const Color darkBackground = Color(0xFF111827);
+  static const Color darkSurface = Color(0xFF1F2937);
+  static const Color darkPrimary = Color(0xFF60A5FA);
+  static const Color darkOnPrimary = Color(0xFF000000);
+  static const Color darkSecondary = Color(0xFF9CA3AF);
+  static const Color darkOnSecondary = Color(0xFF000000);
+  static const Color darkError = Color(0xFFF87171);
+  static const Color darkOnError = Color(0xFF000000);
+  static const Color darkText = Color(0xFFF9FAFB);
+  static const Color darkTextSecondary = Color(0xFFD1D5DB);
+  static const Color darkBorder = Color(0xFF374151);
+  static const Color darkDivider = Color(0xFF374151);
 
   // Dark Theme
   static final ThemeData darkTheme = ThemeData(

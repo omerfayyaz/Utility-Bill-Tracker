@@ -34,8 +34,6 @@ class UtilityBillLoggerApp extends StatelessWidget {
         title: 'Utility Bill Logger',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
         initialRoute: AppRoutes.splash,
         routes: {
           AppRoutes.splash: (context) => const SplashScreen(),
