@@ -59,8 +59,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Welcome Back',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ),
 
@@ -69,8 +69,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Sign in to continue tracking your utility consumption',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
                   textAlign: TextAlign.center,
                 ),
 
@@ -228,18 +228,28 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _handleLogin() async {
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
-      final formData = _formKey.currentState!.value;
-      final email = formData['email'] as String;
-      final password = formData['password'] as String;
-
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.login(email, password);
-
-      if (success && mounted) {
+  void _handleLogin() async {
+    final formState = _formKey.currentState;
+    if (formState == null || !formState.saveAndValidate()) return;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final email = formState.value['email'] as String;
+    final password = formState.value['password'] as String;
+    final success = await authProvider.login(email, password);
+    if (success) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.error ?? 'Login successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
         Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
       }
+    } else if (authProvider.error != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(authProvider.error!), backgroundColor: Colors.red),
+      );
     }
   }
 

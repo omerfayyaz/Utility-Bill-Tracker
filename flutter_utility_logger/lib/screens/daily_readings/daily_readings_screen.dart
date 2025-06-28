@@ -52,10 +52,11 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
               padding: const EdgeInsets.all(16),
               itemCount: readingsByDate.length,
               itemBuilder: (context, index) {
-                final dateKey = readingsByDate.keys.elementAt(index);
+                final sortedKeys = readingsByDate.keys.toList()
+                  ..sort((a, b) => b.compareTo(a)); // Descending order
+                final dateKey = sortedKeys[index];
                 final readings = readingsByDate[dateKey]!;
                 final date = DateTime.parse(dateKey);
-
                 return _buildDateGroup(context, date, readings, activeCycle);
               },
             ),
@@ -146,8 +147,8 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
     List<DailyReading> readings,
     dynamic activeCycle,
   ) {
-    // Sort readings by time (latest first)
-    readings.sort((a, b) => b.readingTime.compareTo(a.readingTime));
+    // Sort readings by time (earliest first)
+    readings.sort((a, b) => a.readingTime.compareTo(b.readingTime));
 
     // Calculate consumption for each reading
     final readingsWithConsumption = <MapEntry<DailyReading, double>>[];
@@ -158,6 +159,9 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
       readingsWithConsumption.add(MapEntry(reading, consumed));
       previousValue = reading.readingValue;
     }
+
+    // Reverse for display (latest first)
+    final displayList = readingsWithConsumption.reversed.toList();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -181,9 +185,9 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
                 Text(
                   _formatDate(date),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700],
+                      ),
                 ),
                 const Spacer(),
                 Text(
@@ -197,7 +201,7 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
           ),
 
           // Readings List
-          ...readingsWithConsumption.map((entry) {
+          ...displayList.map((entry) {
             final reading = entry.key;
             final consumed = entry.value;
 
@@ -252,23 +256,22 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
               Icon(
                 consumed > 0 ? Icons.trending_up : Icons.trending_down,
                 size: 16,
-                color: consumed > 0
-                    ? AppTheme.successColor
-                    : AppTheme.errorColor,
+                color:
+                    consumed > 0 ? AppTheme.successColor : AppTheme.errorColor,
               ),
               const SizedBox(width: 4),
               Text(
                 consumed > 0
                     ? '+${consumed.toStringAsFixed(2)} consumed'
                     : consumed < 0
-                    ? '${consumed.toStringAsFixed(2)} consumed'
-                    : 'No change',
+                        ? '${consumed.toStringAsFixed(2)} consumed'
+                        : 'No change',
                 style: TextStyle(
                   color: consumed > 0
                       ? AppTheme.successColor
                       : consumed < 0
-                      ? AppTheme.errorColor
-                      : Colors.grey[600],
+                          ? AppTheme.errorColor
+                          : Colors.grey[600],
                   fontSize: 12,
                 ),
               ),

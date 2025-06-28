@@ -66,22 +66,38 @@ class DailyReadingProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body)['data'];
-        _dailyReadings =
-            data.map((json) => DailyReading.fromJson(json)).toList();
+        final responseJson = json.decode(response.body);
+        if (responseJson['success'] == true) {
+          final List<dynamic> data = responseJson['data'];
+          _dailyReadings =
+              data.map((json) => DailyReading.fromJson(json)).toList();
 
-        await saveToLocalStorage();
-        notifyListeners();
+          await saveToLocalStorage();
+          notifyListeners();
+        } else {
+          throw Exception(
+              responseJson['message'] ?? 'Failed to fetch daily readings');
+        }
       } else {
         throw Exception(
             'Failed to fetch daily readings: ${response.statusCode}');
       }
     } catch (e) {
-      _setError(e.toString());
+      String errorMsg = e.toString();
+      if (e is http.Response) {
+        try {
+          final errorJson = json.decode(e.body);
+          if (errorJson is Map && errorJson['message'] != null) {
+            errorMsg = errorJson['message'];
+          }
+        } catch (_) {}
+      }
+      _setError(errorMsg);
       debugPrint('Error fetching daily readings: $e');
     } finally {
       _setLoading(false);
@@ -112,6 +128,7 @@ class DailyReadingProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: json.encode({
           'billing_cycle_id': billingCycleId,
@@ -124,19 +141,32 @@ class DailyReadingProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        final data = json.decode(response.body)['data'];
-        final newReading = DailyReading.fromJson(data);
-        _dailyReadings.add(newReading);
+        final responseJson = json.decode(response.body);
+        if (responseJson['success'] == true) {
+          final data = responseJson['data'];
+          final newReading = DailyReading.fromJson(data);
+          _dailyReadings.add(newReading);
 
-        await saveToLocalStorage();
-        notifyListeners();
-        return true;
+          await saveToLocalStorage();
+          notifyListeners();
+          return true;
+        } else {
+          throw response;
+        }
       } else {
-        throw Exception(
-            'Failed to create daily reading: ${response.statusCode}');
+        throw response;
       }
     } catch (e) {
-      _setError(e.toString());
+      String errorMsg = e.toString();
+      if (e is http.Response) {
+        try {
+          final errorJson = json.decode(e.body);
+          if (errorJson is Map && errorJson['message'] != null) {
+            errorMsg = errorJson['message'];
+          }
+        } catch (_) {}
+      }
+      _setError(errorMsg);
       debugPrint('Error creating daily reading: $e');
       return false;
     } finally {
@@ -148,6 +178,7 @@ class DailyReadingProvider with ChangeNotifier {
   Future<bool> quickAddDailyReading({
     required int billingCycleId,
     required double readingValue,
+    required TimeOfDay readingTime,
     String? notes,
   }) async {
     _setLoading(true);
@@ -168,28 +199,44 @@ class DailyReadingProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: json.encode({
           'billing_cycle_id': billingCycleId,
           'reading_value': readingValue,
+          'reading_time':
+              '${readingTime.hour.toString().padLeft(2, '0')}:${readingTime.minute.toString().padLeft(2, '0')}',
           'notes': notes,
         }),
       );
 
       if (response.statusCode == 201) {
-        final data = json.decode(response.body)['data'];
-        final newReading = DailyReading.fromJson(data);
-        _dailyReadings.add(newReading);
+        final responseJson = json.decode(response.body);
+        if (responseJson['success'] == true) {
+          final data = responseJson['data'];
+          final newReading = DailyReading.fromJson(data);
+          _dailyReadings.add(newReading);
 
-        await saveToLocalStorage();
-        notifyListeners();
-        return true;
+          await saveToLocalStorage();
+          notifyListeners();
+          return true;
+        } else {
+          throw response;
+        }
       } else {
-        throw Exception(
-            'Failed to quick add daily reading: ${response.statusCode}');
+        throw response;
       }
     } catch (e) {
-      _setError(e.toString());
+      String errorMsg = e.toString();
+      if (e is http.Response) {
+        try {
+          final errorJson = json.decode(e.body);
+          if (errorJson is Map && errorJson['message'] != null) {
+            errorMsg = errorJson['message'];
+          }
+        } catch (_) {}
+      }
+      _setError(errorMsg);
       debugPrint('Error quick adding daily reading: $e');
       return false;
     } finally {
@@ -231,28 +278,43 @@ class DailyReadingProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: json.encode(updateData),
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body)['data'];
-        final updatedReading = DailyReading.fromJson(data);
+        final responseJson = json.decode(response.body);
+        if (responseJson['success'] == true) {
+          final data = responseJson['data'];
+          final updatedReading = DailyReading.fromJson(data);
 
-        final index = _dailyReadings.indexWhere((reading) => reading.id == id);
-        if (index != -1) {
-          _dailyReadings[index] = updatedReading;
+          final index =
+              _dailyReadings.indexWhere((reading) => reading.id == id);
+          if (index != -1) {
+            _dailyReadings[index] = updatedReading;
+          }
+
+          await saveToLocalStorage();
+          notifyListeners();
+          return true;
+        } else {
+          throw response;
         }
-
-        await saveToLocalStorage();
-        notifyListeners();
-        return true;
       } else {
-        throw Exception(
-            'Failed to update daily reading: ${response.statusCode}');
+        throw response;
       }
     } catch (e) {
-      _setError(e.toString());
+      String errorMsg = e.toString();
+      if (e is http.Response) {
+        try {
+          final errorJson = json.decode(e.body);
+          if (errorJson is Map && errorJson['message'] != null) {
+            errorMsg = errorJson['message'];
+          }
+        } catch (_) {}
+      }
+      _setError(errorMsg);
       debugPrint('Error updating daily reading: $e');
       return false;
     } finally {
@@ -278,6 +340,7 @@ class DailyReadingProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       );
 

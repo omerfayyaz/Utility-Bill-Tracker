@@ -27,13 +27,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const ProfileScreen(),
   ];
 
+  int _mapNavIndexToScreenIndex(int navIndex) {
+    // navIndex: 0=Home, 1=Readings, 2=FAB, 3=Cycles, 4=Profile
+    if (navIndex < 2) return navIndex;
+    if (navIndex == 2) return _currentIndex; // ignore FAB tap, stay on current
+    return navIndex - 1; // 3->2, 4->3
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: _screens[_mapNavIndexToScreenIndex(_currentIndex)],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, AppRoutes.dailyReadingQuickAdd);
+        },
+        backgroundColor: AppTheme.primaryColor,
+        elevation: 6,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, size: 32, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          if (index == 2) return; // Ignore FAB center tap
           setState(() {
             _currentIndex = index;
           });
@@ -51,6 +69,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(Icons.list_alt_outlined),
             activeIcon: Icon(Icons.list_alt),
             label: 'Readings',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox.shrink(), // Center space for FAB
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),
@@ -629,7 +651,21 @@ class HomeTab extends StatelessWidget {
         }
 
         return Column(
-          children: recentReadings.map((reading) {
+          children: recentReadings.asMap().entries.map((entry) {
+            final i = entry.key;
+            final reading = entry.value;
+            // Calculate consumed value
+            double previousValue;
+            if (i == recentReadings.length - 1) {
+              // Last in the list, use startReading from active cycle if available
+              final billingCycleProvider =
+                  Provider.of<BillingCycleProvider>(context, listen: false);
+              final activeCycle = billingCycleProvider.activeCycle;
+              previousValue = activeCycle?.startReading ?? 0;
+            } else {
+              previousValue = recentReadings[i + 1].readingValue;
+            }
+            final consumed = reading.readingValue - previousValue;
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
@@ -641,8 +677,45 @@ class HomeTab extends StatelessWidget {
                   '${reading.formattedReadingValue} units',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(
-                  '${reading.formattedDate} at ${reading.formattedTime}',
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${reading.formattedDate} at ${reading.formattedTime}',
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          consumed > 0
+                              ? Icons.trending_up
+                              : Icons.trending_down,
+                          size: 16,
+                          color: consumed > 0
+                              ? AppTheme.successColor
+                              : consumed < 0
+                                  ? AppTheme.errorColor
+                                  : Colors.grey[600],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          consumed > 0
+                              ? '+${consumed.toStringAsFixed(2)} consumed'
+                              : consumed < 0
+                                  ? '${consumed.toStringAsFixed(2)} consumed'
+                                  : 'No change',
+                          style: TextStyle(
+                            color: consumed > 0
+                                ? AppTheme.successColor
+                                : consumed < 0
+                                    ? AppTheme.errorColor
+                                    : Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {

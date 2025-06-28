@@ -71,16 +71,15 @@ class AuthProvider extends ChangeNotifier {
         }),
       );
 
-      if (response.statusCode == 200) {
-        final responseJson = json.decode(response.body);
-        _token = responseJson['token'];
-        _user = User.fromJson(responseJson['user']['data']);
+      final responseJson = json.decode(response.body);
+      if (response.statusCode == 200 && responseJson['success'] == true) {
+        _token = responseJson['data']['token'];
+        _user = User.fromJson(responseJson['data']['user']);
         await _saveAuthData();
         _setLoading(false);
         return true;
       } else {
-        final data = json.decode(response.body);
-        _setError(data['message'] ?? 'Login failed');
+        _setError(responseJson['message'] ?? 'Login failed');
         _setLoading(false);
         return false;
       }
@@ -111,17 +110,16 @@ class AuthProvider extends ChangeNotifier {
         }),
       );
 
-      if (response.statusCode == 201) {
-        final responseJson = json.decode(response.body);
-        _token = responseJson['token'];
-        _user = User.fromJson(responseJson['user']['data']);
+      final responseJson = json.decode(response.body);
+      if (response.statusCode == 201 && responseJson['success'] == true) {
+        _token = responseJson['data']['token'];
+        _user = User.fromJson(responseJson['data']['user']);
         await _saveAuthData();
         _setLoading(false);
         return true;
       } else {
-        final data = json.decode(response.body);
-        if (data['errors'] != null) {
-          final errors = data['errors'] as Map<String, dynamic>;
+        if (responseJson['errors'] != null) {
+          final errors = responseJson['errors'] as Map<String, dynamic>;
           final errorMessages = errors.values
               .expand((e) => e is List ? e : [e])
               .where((e) => e is String)
@@ -129,7 +127,7 @@ class AuthProvider extends ChangeNotifier {
               .join(', ');
           _setError(errorMessages);
         } else {
-          _setError(data['message'] ?? 'Registration failed');
+          _setError(responseJson['message'] ?? 'Registration failed');
         }
         _setLoading(false);
         return false;

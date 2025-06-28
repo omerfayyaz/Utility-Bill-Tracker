@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/billing_cycle.dart';
 import '../../providers/daily_reading_provider.dart';
 import '../../utils/date_picker_widget.dart';
+import '../../providers/billing_cycle_provider.dart';
 
 class DailyReadingCreateScreen extends StatefulWidget {
   const DailyReadingCreateScreen({Key? key}) : super(key: key);
@@ -29,6 +30,19 @@ class _DailyReadingCreateScreenState extends State<DailyReadingCreateScreen> {
     if (args is BillingCycle) {
       _billingCycleId = args.id;
       _readingValueController.text = args.currentReading.toString();
+    } else {
+      // Try to get active cycle from provider
+      final billingCycleProvider =
+          Provider.of<BillingCycleProvider>(context, listen: false);
+      final activeCycle = billingCycleProvider.activeCycle;
+      if (activeCycle != null) {
+        _billingCycleId = activeCycle.id;
+        _readingValueController.text = activeCycle.currentReading.toString();
+      } else {
+        setState(() {
+          _error = 'No active billing cycle found. Please create one first.';
+        });
+      }
     }
   }
 
@@ -41,6 +55,12 @@ class _DailyReadingCreateScreenState extends State<DailyReadingCreateScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _readingDate == null) return;
+    if (_billingCycleId == null) {
+      setState(() {
+        _error = 'No billing cycle selected. Please go back and try again.';
+      });
+      return;
+    }
     setState(() {
       _isSubmitting = true;
       _error = null;
@@ -60,7 +80,27 @@ class _DailyReadingCreateScreenState extends State<DailyReadingCreateScreen> {
       _error = provider.error;
     });
     if (success) {
-      Navigator.of(context).pop(true);
+      // Refresh dashboard data
+      final billingCycleProvider =
+          Provider.of<BillingCycleProvider>(context, listen: false);
+      final dailyReadingProvider =
+          Provider.of<DailyReadingProvider>(context, listen: false);
+      await Future.wait([
+        billingCycleProvider.fetchBillingCycles(),
+        dailyReadingProvider.fetchDailyReadings(),
+      ]);
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(provider.error ?? 'Reading added successfully!')),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } else if (_error != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_error!), backgroundColor: Colors.red),
+      );
     }
   }
 

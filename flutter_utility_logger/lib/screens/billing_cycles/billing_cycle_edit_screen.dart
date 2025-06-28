@@ -68,7 +68,20 @@ class _BillingCycleEditScreenState extends State<BillingCycleEditScreen> {
       _error = provider.error;
     });
     if (success) {
-      Navigator.of(context).pop(true);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(provider.error ?? 'Billing cycle updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } else if (_error != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_error!), backgroundColor: Colors.red),
+      );
     }
   }
 

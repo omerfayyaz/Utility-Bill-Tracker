@@ -41,20 +41,27 @@ class BillingCycleProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body)['data'];
-        _billingCycles =
-            data.map((json) => BillingCycle.fromJson(json)).toList();
+        final responseJson = json.decode(response.body);
+        if (responseJson['success'] == true) {
+          final List<dynamic> data = responseJson['data'];
+          _billingCycles =
+              data.map((json) => BillingCycle.fromJson(json)).toList();
 
-        // Set active cycle
-        _activeCycle =
-            _billingCycles.where((cycle) => cycle.isActive).firstOrNull;
+          // Set active cycle
+          _activeCycle =
+              _billingCycles.where((cycle) => cycle.isActive).firstOrNull;
 
-        await saveToLocalStorage();
-        notifyListeners();
+          await saveToLocalStorage();
+          notifyListeners();
+        } else {
+          throw Exception(
+              responseJson['message'] ?? 'Failed to fetch billing cycles');
+        }
       } else {
         throw Exception(
             'Failed to fetch billing cycles: ${response.statusCode}');
@@ -89,6 +96,7 @@ class BillingCycleProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: json.encode({
           'name': name,
@@ -98,18 +106,24 @@ class BillingCycleProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        final data = json.decode(response.body)['data'];
-        final newCycle = BillingCycle.fromJson(data);
-        _billingCycles.add(newCycle);
+        final responseJson = json.decode(response.body);
+        if (responseJson['success'] == true) {
+          final data = responseJson['data'];
+          final newCycle = BillingCycle.fromJson(data);
+          _billingCycles.add(newCycle);
 
-        // If this is the first cycle or marked as active, set it as active
-        if (newCycle.isActive || _billingCycles.length == 1) {
-          _activeCycle = newCycle;
+          // If this is the first cycle or marked as active, set it as active
+          if (newCycle.isActive || _billingCycles.length == 1) {
+            _activeCycle = newCycle;
+          }
+
+          await saveToLocalStorage();
+          notifyListeners();
+          return true;
+        } else {
+          throw Exception(
+              responseJson['message'] ?? 'Failed to create billing cycle');
         }
-
-        await saveToLocalStorage();
-        notifyListeners();
-        return true;
       } else {
         throw Exception(
             'Failed to create billing cycle: ${response.statusCode}');
@@ -159,29 +173,36 @@ class BillingCycleProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: json.encode(updateData),
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body)['data'];
-        final updatedCycle = BillingCycle.fromJson(data);
+        final responseJson = json.decode(response.body);
+        if (responseJson['success'] == true) {
+          final data = responseJson['data'];
+          final updatedCycle = BillingCycle.fromJson(data);
 
-        final index = _billingCycles.indexWhere((cycle) => cycle.id == id);
-        if (index != -1) {
-          _billingCycles[index] = updatedCycle;
+          final index = _billingCycles.indexWhere((cycle) => cycle.id == id);
+          if (index != -1) {
+            _billingCycles[index] = updatedCycle;
 
-          // Update active cycle if needed
-          if (updatedCycle.isActive) {
-            _activeCycle = updatedCycle;
-          } else if (_activeCycle?.id == id) {
-            _activeCycle = null;
+            // Update active cycle if needed
+            if (updatedCycle.isActive) {
+              _activeCycle = updatedCycle;
+            } else if (_activeCycle?.id == id) {
+              _activeCycle = null;
+            }
           }
-        }
 
-        await saveToLocalStorage();
-        notifyListeners();
-        return true;
+          await saveToLocalStorage();
+          notifyListeners();
+          return true;
+        } else {
+          throw Exception(
+              responseJson['message'] ?? 'Failed to update billing cycle');
+        }
       } else {
         throw Exception(
             'Failed to update billing cycle: ${response.statusCode}');
@@ -213,6 +234,7 @@ class BillingCycleProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       );
 

@@ -64,7 +64,17 @@ class _DailyReadingEditScreenState extends State<DailyReadingEditScreen> {
       _error = provider.error;
     });
     if (success) {
-      Navigator.of(context).pop(true);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(provider.error ?? 'Reading updated successfully!')),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } else if (_error != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_error!), backgroundColor: Colors.red),
+      );
     }
   }
 

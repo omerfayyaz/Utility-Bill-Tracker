@@ -61,8 +61,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   'Join Utility Bill Logger',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ),
 
@@ -71,8 +71,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   'Create your account to start tracking utility consumption',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
                   textAlign: TextAlign.center,
                 ),
 
@@ -198,9 +198,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     return ElevatedButton(
-                      onPressed: authProvider.isLoading
-                          ? null
-                          : _handleRegister,
+                      onPressed:
+                          authProvider.isLoading ? null : _handleRegister,
                       child: authProvider.isLoading
                           ? const SizedBox(
                               height: 20,
@@ -288,25 +287,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Future<void> _handleRegister() async {
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
-      final formData = _formKey.currentState!.value;
-      final name = formData['name'] as String;
-      final email = formData['email'] as String;
-      final password = formData['password'] as String;
-      final passwordConfirmation = formData['password_confirmation'] as String;
-
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.register(
-        name,
-        email,
-        password,
-        passwordConfirmation,
-      );
-
-      if (success && mounted) {
+  void _handleRegister() async {
+    final formState = _formKey.currentState;
+    if (formState == null || !formState.saveAndValidate()) return;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final name = formState.value['name'] as String;
+    final email = formState.value['email'] as String;
+    final password = formState.value['password'] as String;
+    final passwordConfirmation =
+        formState.value['password_confirmation'] as String;
+    final success = await authProvider.register(
+        name, email, password, passwordConfirmation);
+    if (success) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.error ?? 'Registration successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
         Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
       }
+    } else if (authProvider.error != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(authProvider.error!), backgroundColor: Colors.red),
+      );
     }
   }
 }

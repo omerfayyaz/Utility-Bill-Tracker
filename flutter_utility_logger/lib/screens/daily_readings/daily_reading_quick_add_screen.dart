@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/billing_cycle.dart';
 import '../../providers/daily_reading_provider.dart';
+import '../../providers/billing_cycle_provider.dart';
 
 class DailyReadingQuickAddScreen extends StatefulWidget {
   const DailyReadingQuickAddScreen({Key? key}) : super(key: key);
@@ -28,6 +29,19 @@ class _DailyReadingQuickAddScreenState
     if (args is BillingCycle) {
       _billingCycleId = args.id;
       _readingValueController.text = args.currentReading.toString();
+    } else {
+      // Try to get active cycle from provider
+      final billingCycleProvider =
+          Provider.of<BillingCycleProvider>(context, listen: false);
+      final activeCycle = billingCycleProvider.activeCycle;
+      if (activeCycle != null) {
+        _billingCycleId = activeCycle.id;
+        _readingValueController.text = activeCycle.currentReading.toString();
+      } else {
+        setState(() {
+          _error = 'No active billing cycle found. Please create one first.';
+        });
+      }
     }
   }
 
@@ -40,6 +54,19 @@ class _DailyReadingQuickAddScreenState
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_billingCycleId == null) {
+      setState(() {
+        _error = 'No billing cycle selected. Please go back and try again.';
+      });
+      return;
+    }
+    final readingValue = double.tryParse(_readingValueController.text.trim());
+    if (readingValue == null || readingValue < 0) {
+      setState(() {
+        _error = 'Reading value must be a positive number.';
+      });
+      return;
+    }
     setState(() {
       _isSubmitting = true;
       _error = null;
@@ -47,7 +74,8 @@ class _DailyReadingQuickAddScreenState
     final provider = Provider.of<DailyReadingProvider>(context, listen: false);
     final success = await provider.quickAddDailyReading(
       billingCycleId: _billingCycleId!,
-      readingValue: double.tryParse(_readingValueController.text.trim()) ?? 0,
+      readingValue: readingValue,
+      readingTime: _readingTime,
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
@@ -57,7 +85,27 @@ class _DailyReadingQuickAddScreenState
       _error = provider.error;
     });
     if (success) {
-      Navigator.of(context).pop(true);
+      // Refresh dashboard data
+      final billingCycleProvider =
+          Provider.of<BillingCycleProvider>(context, listen: false);
+      final dailyReadingProvider =
+          Provider.of<DailyReadingProvider>(context, listen: false);
+      await Future.wait([
+        billingCycleProvider.fetchBillingCycles(),
+        dailyReadingProvider.fetchDailyReadings(),
+      ]);
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(provider.error ?? 'Reading added successfully!')),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } else if (_error != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_error!), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -126,7 +174,8 @@ class _DailyReadingQuickAddScreenState
                       Text(_error!, style: const TextStyle(color: Colors.red)),
                 ),
               ElevatedButton(
-                onPressed: _isSubmitting ? null : _submit,
+                onPressed:
+                    _isSubmitting || _billingCycleId == null ? null : _submit,
                 child: _isSubmitting
                     ? const SizedBox(
                         width: 20,
