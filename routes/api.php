@@ -27,7 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/daily-readings/{dailyReading}', [DailyReadingController::class, 'apiShow']);
     Route::put('/daily-readings/{dailyReading}', [DailyReadingController::class, 'apiUpdate']);
     Route::delete('/daily-readings/{dailyReading}', [DailyReadingController::class, 'apiDestroy']);
-    Route::post('/daily-readings/quick-add', [DailyReadingController::class, 'apiQuickAdd']);
     Route::post('/daily-readings/offline-sync', [DailyReadingController::class, 'offlineSync']);
 });
 

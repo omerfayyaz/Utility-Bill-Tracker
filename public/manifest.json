@@ -28,10 +28,10 @@
     ],
     "shortcuts": [
         {
-            "name": "Quick Add Reading",
+            "name": "Add Reading",
             "short_name": "Add Reading",
-            "description": "Quickly add a new reading",
-            "url": "/daily-readings/quick-add"
+            "description": "Add a new reading",
+            "url": "/daily-readings/create"
         },
         {
             "name": "View Readings",

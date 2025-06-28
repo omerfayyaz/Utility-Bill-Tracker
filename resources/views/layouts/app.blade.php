@@ -81,21 +81,6 @@
                     </div>
 
                     <div class="flex items-center space-x-4">
-                        {{-- <nav class="flex space-x-4">
-                            <a href="{{ route('daily-readings.index') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 {{ request()->routeIs('daily-readings.*') ? 'text-blue-600 bg-blue-50' : '' }}">
-                                <span class="hidden">Readings</span>
-                                <span class="inline">📊</span>
-                            </a>
-                            <a href="{{ route('billing-cycles.index') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 {{ request()->routeIs('billing-cycles.*') ? 'text-blue-600 bg-blue-50' : '' }}">
-                                <span class="hidden">Cycles</span>
-                                <span class="inline">📅</span>
-                            </a>
-                            <a href="{{ route('daily-readings.quick-add') }}" class="text-blue-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 {{ request()->routeIs('daily-readings.quick-add') ? 'bg-blue-50' : '' }}">
-                                <span class="hidden">Quick Add</span>
-                                <span class="inline">➕</span>
-                            </a>
-                        </nav> --}}
-
                         <!-- User Menu -->
                         <div class="relative">
                             <div class="flex items-center space-x-2">
@@ -152,12 +137,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                     </svg>
                     <span class="text-xs">Readings</span>
-                </a>
-                <a href="{{ route('daily-readings.quick-add') }}" class="flex flex-col items-center py-2 px-3 text-blue-600">
-                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    <span class="text-xs">Quick Add</span>
                 </a>
                 <a href="{{ route('billing-cycles.index') }}" class="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-blue-600">
                     <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -55,7 +55,10 @@ class BillingCycle extends Model
 
     public function getCurrentReadingAttribute(): float
     {
-        $latestReading = $this->dailyReadings()->latest('reading_date')->first();
+        $latestReading = $this->dailyReadings()
+            ->orderBy('reading_date', 'desc')
+            ->orderBy('reading_time', 'desc')
+            ->first();
         return $latestReading ? $latestReading->reading_value : $this->start_reading;
     }
 

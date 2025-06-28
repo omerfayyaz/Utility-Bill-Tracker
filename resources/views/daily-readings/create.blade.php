@@ -91,8 +91,7 @@
                             <input type="date"
                                    name="reading_date"
                                    id="reading_date"
-                                   value="{{ old('reading_date', now()->format('Y-m-d')) }}"
-                                   max="{{ now()->format('Y-m-d') }}"
+                                   value="{{ old('reading_date', now()->toDateString()) }}"
                                    class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('reading_date') border-red-300 focus:ring-red-500 focus:border-red-500 @enderror"
                                    required>
                         </div>
@@ -172,25 +171,6 @@
                     </div>
                 </div>
             </form>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="mt-6 bg-gray-50 rounded-lg p-4">
-            <h3 class="text-sm font-medium text-gray-900 mb-3">Quick Actions</h3>
-            <div class="space-y-2">
-                <a href="{{ route('daily-readings.quick-add') }}" class="flex items-center text-sm text-blue-600 hover:text-blue-800">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Quick add for today
-                </a>
-                <a href="{{ route('billing-cycles.show', $activeCycle) }}" class="flex items-center text-sm text-gray-600 hover:text-gray-800">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    View cycle details
-                </a>
-            </div>
         </div>
     </div>
 </x-app-layout>

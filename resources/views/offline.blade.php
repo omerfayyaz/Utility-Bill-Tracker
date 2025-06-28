@@ -100,10 +100,10 @@
 
         <div class="offline-data">
             <h3>Offline Features Available:</h3>
-            <p>• Add new readings (will sync when online)<br>
+            <p>• Offline support for viewing readings<br>
+            • Add reading functionality<br>
             • View cached readings<br>
-            • View cached billing cycles<br>
-            • Quick add functionality</p>
+            • View cached billing cycles</p>
         </div>
     </div>
 
