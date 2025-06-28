@@ -55,7 +55,8 @@ class AppTheme {
     appBarTheme: const AppBarTheme(
       backgroundColor: lightBackground,
       foregroundColor: lightText,
-      elevation: 0,
+      elevation: 4,
+      shadowColor: Color(0x22000000),
       centerTitle: true,
       titleTextStyle: TextStyle(
         color: lightText,
