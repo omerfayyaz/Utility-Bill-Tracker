@@ -18,8 +18,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            // Allow multiple readings per date, but ensure unique combination of date and time
-            $table->unique(['billing_cycle_id', 'reading_date', 'reading_time']);
+            // No unique constraints needed
         });
     }
 
