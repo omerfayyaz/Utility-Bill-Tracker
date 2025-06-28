@@ -342,203 +342,284 @@ class DailyReadingController extends Controller
     // API: List daily readings (for active cycle or all)
     public function apiIndex(Request $request)
     {
-        \Log::info('API /api/daily-readings [GET] called', [
-            'user_id' => $request->user()->id,
-            'ip' => $request->ip(),
-        ]);
-        $activeCycle = $request->user()->billingCycles()->where('is_active', true)->first();
-        $readings = collect();
-        if ($activeCycle) {
-            $readings = $activeCycle->dailyReadings()->orderBy('reading_date', 'asc')->orderBy('reading_time', 'asc')->get();
+        try {
+            \Log::info('API /api/daily-readings [GET] called', [
+                'user_id' => $request->user()->id,
+                'ip' => $request->ip(),
+            ]);
+            $activeCycle = $request->user()->billingCycles()->where('is_active', true)->first();
+            $readings = collect();
+            if ($activeCycle) {
+                $readings = $activeCycle->dailyReadings()->orderBy('reading_date', 'asc')->orderBy('reading_time', 'asc')->get();
+            }
+            $data = \App\Http\Resources\DailyReadingResource::collection($readings)->resolve();
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => $data,
+                'message' => 'Daily readings fetched successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
         }
-        return DailyReadingResource::collection($readings);
     }
 
     // API: Create daily reading
     public function apiStore(Request $request)
     {
-        \Log::info('API /api/daily-readings [POST] called', [
-            'user_id' => $request->user()->id,
-            'ip' => $request->ip(),
-            'data' => $request->all(),
-        ]);
-        $validated = $request->validate([
-            'billing_cycle_id' => 'required|exists:billing_cycles,id',
-            'reading_date' => 'required|date|before_or_equal:today',
-            'reading_time' => 'required|date_format:H:i',
-            'reading_value' => 'required|numeric|min:0',
-            'notes' => 'nullable|string',
-        ]);
-        $billingCycle = $request->user()->billingCycles()->find($validated['billing_cycle_id']);
-        if (!$billingCycle) {
-            \Log::warning('API /api/daily-readings [POST] forbidden', [
+        try {
+            \Log::info('API /api/daily-readings [POST] called', [
                 'user_id' => $request->user()->id,
-                'cycle_id' => $validated['billing_cycle_id'],
+                'ip' => $request->ip(),
+                'data' => $request->all(),
             ]);
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-        $existingReading = $billingCycle->dailyReadings()->where('reading_date', $validated['reading_date'])->where('reading_time', $validated['reading_time'])->first();
-        if ($existingReading) {
-            \Log::warning('API /api/daily-readings [POST] duplicate', [
-                'user_id' => $request->user()->id,
-                'cycle_id' => $validated['billing_cycle_id'],
+            $validated = $request->validate([
+                'billing_cycle_id' => 'required|exists:billing_cycles,id',
+                'reading_date' => 'required|date|before_or_equal:today',
+                'reading_time' => 'required|date_format:H:i',
+                'reading_value' => 'required|numeric|min:0',
+                'notes' => 'nullable|string',
             ]);
-            return response()->json(['message' => 'A reading already exists for this date and time.'], 422);
+            $billingCycle = $request->user()->billingCycles()->find($validated['billing_cycle_id']);
+            if (!$billingCycle) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'Forbidden',
+                ], 403);
+            }
+            $existingReading = $billingCycle->dailyReadings()->where('reading_date', $validated['reading_date'])->where('reading_time', $validated['reading_time'])->first();
+            if ($existingReading) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'A reading already exists for this date and time.'
+                ], 422);
+            }
+            $validationError = $this->validateReadingValue($validated['billing_cycle_id'], $validated['reading_date'], $validated['reading_time'], $validated['reading_value']);
+            if ($validationError) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => $validationError
+                ], 422);
+            }
+            $reading = $request->user()->dailyReadings()->create($validated);
+            $data = (new \App\Http\Resources\DailyReadingResource($reading))->resolve();
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => $data,
+                'message' => 'Daily reading created successfully.'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
         }
-        $validationError = $this->validateReadingValue($validated['billing_cycle_id'], $validated['reading_date'], $validated['reading_time'], $validated['reading_value']);
-        if ($validationError) {
-            \Log::warning('API /api/daily-readings [POST] validation error', [
-                'user_id' => $request->user()->id,
-                'cycle_id' => $validated['billing_cycle_id'],
-                'error' => $validationError,
-            ]);
-            return response()->json(['message' => $validationError], 422);
-        }
-        $reading = $request->user()->dailyReadings()->create($validated);
-        \Log::info('API /api/daily-readings [POST] success', [
-            'user_id' => $request->user()->id,
-            'reading_id' => $reading->id,
-        ]);
-        return new DailyReadingResource($reading);
     }
 
     // API: Show daily reading
     public function apiShow(Request $request, DailyReading $dailyReading)
     {
-        \Log::info('API /api/daily-readings/{id} [GET] called', [
-            'user_id' => $request->user()->id,
-            'reading_id' => $dailyReading->id,
-            'ip' => $request->ip(),
-        ]);
-        if ($dailyReading->user_id !== $request->user()->id) {
-            \Log::warning('API /api/daily-readings/{id} [GET] forbidden', [
+        try {
+            \Log::info('API /api/daily-readings/{id} [GET] called', [
                 'user_id' => $request->user()->id,
                 'reading_id' => $dailyReading->id,
+                'ip' => $request->ip(),
             ]);
-            return response()->json(['message' => 'Forbidden'], 403);
+            if ($dailyReading->user_id !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'Forbidden',
+                ], 403);
+            }
+            $data = (new \App\Http\Resources\DailyReadingResource($dailyReading))->resolve();
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => $data,
+                'message' => 'Daily reading fetched successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
         }
-        return new DailyReadingResource($dailyReading);
     }
 
     // API: Update daily reading
     public function apiUpdate(Request $request, DailyReading $dailyReading)
     {
-        \Log::info('API /api/daily-readings/{id} [PUT] called', [
-            'user_id' => $request->user()->id,
-            'reading_id' => $dailyReading->id,
-            'ip' => $request->ip(),
-            'data' => $request->all(),
-        ]);
-        if ($dailyReading->user_id !== $request->user()->id) {
-            \Log::warning('API /api/daily-readings/{id} [PUT] forbidden', [
+        try {
+            \Log::info('API /api/daily-readings/{id} [PUT] called', [
                 'user_id' => $request->user()->id,
                 'reading_id' => $dailyReading->id,
+                'ip' => $request->ip(),
+                'data' => $request->all(),
             ]);
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-        $validated = $request->validate([
-            'reading_date' => 'required|date|before_or_equal:today',
-            'reading_time' => 'required|date_format:H:i',
-            'reading_value' => 'required|numeric|min:0',
-            'notes' => 'nullable|string',
-        ]);
-        $existingReading = $dailyReading->billingCycle->dailyReadings()->where('reading_date', $validated['reading_date'])->where('reading_time', $validated['reading_time'])->where('id', '!=', $dailyReading->id)->first();
-        if ($existingReading) {
-            \Log::warning('API /api/daily-readings/{id} [PUT] duplicate', [
-                'user_id' => $request->user()->id,
-                'reading_id' => $dailyReading->id,
+            if ($dailyReading->user_id !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'Forbidden',
+                ], 403);
+            }
+            $validated = $request->validate([
+                'reading_date' => 'required|date|before_or_equal:today',
+                'reading_time' => 'required|date_format:H:i',
+                'reading_value' => 'required|numeric|min:0',
+                'notes' => 'nullable|string',
             ]);
-            return response()->json(['message' => 'A reading already exists for this date and time.'], 422);
-        }
-        $validationError = $this->validateReadingValue($dailyReading->billing_cycle_id, $validated['reading_date'], $validated['reading_time'], $validated['reading_value'], $dailyReading->id);
-        if ($validationError) {
-            \Log::warning('API /api/daily-readings/{id} [PUT] validation error', [
-                'user_id' => $request->user()->id,
-                'reading_id' => $dailyReading->id,
-                'error' => $validationError,
+            $existingReading = $dailyReading->billingCycle->dailyReadings()->where('reading_date', $validated['reading_date'])->where('reading_time', $validated['reading_time'])->where('id', '!=', $dailyReading->id)->first();
+            if ($existingReading) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'A reading already exists for this date and time.'
+                ], 422);
+            }
+            $validationError = $this->validateReadingValue($dailyReading->billing_cycle_id, $validated['reading_date'], $validated['reading_time'], $validated['reading_value'], $dailyReading->id);
+            if ($validationError) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => $validationError
+                ], 422);
+            }
+            $dailyReading->update($validated);
+            $data = (new \App\Http\Resources\DailyReadingResource($dailyReading))->resolve();
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => $data,
+                'message' => 'Daily reading updated successfully.'
             ]);
-            return response()->json(['message' => $validationError], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
         }
-        $dailyReading->update($validated);
-        \Log::info('API /api/daily-readings/{id} [PUT] success', [
-            'user_id' => $request->user()->id,
-            'reading_id' => $dailyReading->id,
-        ]);
-        return new DailyReadingResource($dailyReading);
     }
 
     // API: Delete daily reading
     public function apiDestroy(Request $request, DailyReading $dailyReading)
     {
-        \Log::info('API /api/daily-readings/{id} [DELETE] called', [
-            'user_id' => $request->user()->id,
-            'reading_id' => $dailyReading->id,
-            'ip' => $request->ip(),
-        ]);
-        if ($dailyReading->user_id !== $request->user()->id) {
-            \Log::warning('API /api/daily-readings/{id} [DELETE] forbidden', [
+        try {
+            \Log::info('API /api/daily-readings/{id} [DELETE] called', [
                 'user_id' => $request->user()->id,
                 'reading_id' => $dailyReading->id,
+                'ip' => $request->ip(),
             ]);
-            return response()->json(['message' => 'Forbidden'], 403);
+            if ($dailyReading->user_id !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'Forbidden',
+                ], 403);
+            }
+            $dailyReading->delete();
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => [],
+                'message' => 'Daily reading deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
         }
-        $dailyReading->delete();
-        \Log::info('API /api/daily-readings/{id} [DELETE] success', [
-            'user_id' => $request->user()->id,
-            'reading_id' => $dailyReading->id,
-        ]);
-        return response()->json(['message' => 'Daily reading deleted successfully']);
     }
 
     // API: Quick add daily reading
     public function apiQuickAdd(Request $request)
     {
-        \Log::info('API /api/daily-readings/quick-add [POST] called', [
-            'user_id' => $request->user()->id,
-            'ip' => $request->ip(),
-            'data' => $request->all(),
-        ]);
-        $validated = $request->validate([
-            'billing_cycle_id' => 'required|exists:billing_cycles,id',
-            'reading_value' => 'required|numeric|min:0',
-            'reading_time' => 'required|date_format:H:i',
-        ]);
-        $billingCycle = $request->user()->billingCycles()->find($validated['billing_cycle_id']);
-        if (!$billingCycle) {
-            \Log::warning('API /api/daily-readings/quick-add [POST] forbidden', [
+        try {
+            \Log::info('API /api/daily-readings/quick-add [POST] called', [
                 'user_id' => $request->user()->id,
-                'cycle_id' => $validated['billing_cycle_id'],
+                'ip' => $request->ip(),
+                'data' => $request->all(),
             ]);
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-        $readingDate = now()->toDateString();
-        $existingReading = $billingCycle->dailyReadings()->where('reading_date', $readingDate)->where('reading_time', $validated['reading_time'])->first();
-        if ($existingReading) {
-            \Log::warning('API /api/daily-readings/quick-add [POST] duplicate', [
-                'user_id' => $request->user()->id,
-                'cycle_id' => $validated['billing_cycle_id'],
+            $validated = $request->validate([
+                'billing_cycle_id' => 'required|exists:billing_cycles,id',
+                'reading_value' => 'required|numeric|min:0',
+                'reading_time' => 'required|date_format:H:i',
             ]);
-            return response()->json(['message' => 'A reading already exists for today at this time.'], 422);
-        }
-        $validationError = $this->validateReadingValue($validated['billing_cycle_id'], $readingDate, $validated['reading_time'], $validated['reading_value']);
-        if ($validationError) {
-            \Log::warning('API /api/daily-readings/quick-add [POST] validation error', [
-                'user_id' => $request->user()->id,
-                'cycle_id' => $validated['billing_cycle_id'],
-                'error' => $validationError,
+            $billingCycle = $request->user()->billingCycles()->find($validated['billing_cycle_id']);
+            if (!$billingCycle) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'Forbidden',
+                ], 403);
+            }
+            $readingDate = now()->toDateString();
+            $existingReading = $billingCycle->dailyReadings()->where('reading_date', $readingDate)->where('reading_time', $validated['reading_time'])->first();
+            if ($existingReading) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'A reading already exists for today at this time.'
+                ], 422);
+            }
+            $validationError = $this->validateReadingValue($validated['billing_cycle_id'], $readingDate, $validated['reading_time'], $validated['reading_value']);
+            if ($validationError) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => $validationError
+                ], 422);
+            }
+            $reading = $request->user()->dailyReadings()->create([
+                'billing_cycle_id' => $validated['billing_cycle_id'],
+                'reading_date' => $readingDate,
+                'reading_time' => $validated['reading_time'],
+                'reading_value' => $validated['reading_value'],
             ]);
-            return response()->json(['message' => $validationError], 422);
+            $data = (new \App\Http\Resources\DailyReadingResource($reading))->resolve();
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => $data,
+                'message' => 'Daily reading quick added successfully.'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
         }
-        $reading = $request->user()->dailyReadings()->create([
-            'billing_cycle_id' => $validated['billing_cycle_id'],
-            'reading_date' => $readingDate,
-            'reading_time' => $validated['reading_time'],
-            'reading_value' => $validated['reading_value'],
-        ]);
-        \Log::info('API /api/daily-readings/quick-add [POST] success', [
-            'user_id' => $request->user()->id,
-            'reading_id' => $reading->id,
-        ]);
-        return response()->json($reading, 201);
     }
 }

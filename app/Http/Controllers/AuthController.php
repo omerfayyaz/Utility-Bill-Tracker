@@ -70,81 +70,140 @@ class AuthController extends Controller
     // API: Login
     public function apiLogin(Request $request)
     {
-        \Log::info('API /api/login called', [
-            'email' => $request->email,
-            'ip' => $request->ip(),
-        ]);
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-        $user = User::where('email', $request->email)->first();
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            \Log::warning('API /api/login failed', [
+        try {
+            \Log::info('API /api/login called', [
                 'email' => $request->email,
                 'ip' => $request->ip(),
             ]);
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
             ]);
+            $user = User::where('email', $request->email)->first();
+            if (! $user || ! \Hash::check($request->password, $user->password)) {
+                \Log::warning('API /api/login failed', [
+                    'email' => $request->email,
+                    'ip' => $request->ip(),
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'data' => [],
+                    'message' => 'The provided credentials are incorrect.'
+                ], 401);
+            }
+            $token = $user->createToken('mobile')->plainTextToken;
+            \Log::info('API /api/login success', [
+                'user_id' => $user->id,
+                'ip' => $request->ip(),
+            ]);
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => [
+                    'user' => new UserResource($user),
+                    'token' => $token,
+                ],
+                'message' => 'Login successful.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
         }
-        $token = $user->createToken('mobile')->plainTextToken;
-        \Log::info('API /api/login success', [
-            'user_id' => $user->id,
-            'ip' => $request->ip(),
-        ]);
-        return response()->json([
-            'user' => new UserResource($user),
-            'token' => $token,
-        ]);
     }
 
     // API: Register
     public function apiRegister(Request $request)
     {
-        \Log::info('API /api/register called', [
-            'email' => $request->email,
-            'ip' => $request->ip(),
-        ]);
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-        $token = $user->createToken('mobile')->plainTextToken;
-        \Log::info('API /api/register success', [
-            'user_id' => $user->id,
-            'ip' => $request->ip(),
-        ]);
-        return response()->json([
-            'user' => new UserResource($user),
-            'token' => $token,
-        ], 201);
+        try {
+            \Log::info('API /api/register called', [
+                'email' => $request->email,
+                'ip' => $request->ip(),
+            ]);
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => \Hash::make($request->password),
+            ]);
+            $token = $user->createToken('mobile')->plainTextToken;
+            \Log::info('API /api/register success', [
+                'user_id' => $user->id,
+                'ip' => $request->ip(),
+            ]);
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => [
+                    'user' => new UserResource($user),
+                    'token' => $token,
+                ],
+                'message' => 'Registration successful.'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // API: Logout
     public function apiLogout(Request $request)
     {
-        \Log::info('API /api/logout called', [
-            'user_id' => $request->user()->id,
-            'ip' => $request->ip(),
-        ]);
-        $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out successfully']);
+        try {
+            \Log::info('API /api/logout called', [
+                'user_id' => $request->user()->id,
+                'ip' => $request->ip(),
+            ]);
+            $request->user()->currentAccessToken()->delete();
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => [],
+                'message' => 'Logged out successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // API: Get Authenticated User
     public function apiUser(Request $request)
     {
-        \Log::info('API /api/user called', [
-            'user_id' => $request->user()->id,
-            'ip' => $request->ip(),
-        ]);
-        return new UserResource($request->user());
+        try {
+            \Log::info('API /api/user called', [
+                'user_id' => $request->user()->id,
+                'ip' => $request->ip(),
+            ]);
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => new UserResource($request->user()),
+                'message' => 'User fetched successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
