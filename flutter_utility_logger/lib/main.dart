@@ -31,7 +31,7 @@ class UtilityBillLoggerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DailyReadingProvider()),
       ],
       child: MaterialApp(
-        title: 'Utility Bill Logger',
+        title: 'Bill Tracker',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         initialRoute: AppRoutes.splash,
@@ -124,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ],
               ),
               child: const Icon(
-                Icons.electric_meter,
+                Icons.receipt_long,
                 size: 60,
                 color: Colors.blue,
               ),
@@ -133,7 +133,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
             // App Name
             const Text(
-              'Utility Bill Logger',
+              'Bill Tracker',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,

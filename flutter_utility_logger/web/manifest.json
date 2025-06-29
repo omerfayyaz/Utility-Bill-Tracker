@@ -1,11 +1,11 @@
 {
-    "name": "utility_bill_logger",
-    "short_name": "utility_bill_logger",
+    "name": "Bill Tracker",
+    "short_name": "Bill Tracker",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#2563EB",
+    "theme_color": "#2563EB",
+    "description": "A Flutter mobile app for tracking utility bill consumption",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

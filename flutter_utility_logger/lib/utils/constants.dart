@@ -17,7 +17,8 @@ class AppRoutes {
 
 class ApiEndpoints {
   // Base URL - Update this to match your Laravel backend
-  static const String baseUrl = 'http://192.168.1.9:8000';
+  static const String baseUrl = 'https://bill-tracker-app.omerfayyaz.com';
+//   static const String baseUrl = 'http://192.168.1.9:8000';
 
   // Auth endpoints
   static const String login = '/api/login';

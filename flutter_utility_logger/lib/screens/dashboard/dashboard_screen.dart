@@ -129,7 +129,7 @@ class _HomeTabState extends State<HomeTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Utility Bill Logger'),
+        title: const Text('Bill Tracker'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -139,437 +139,587 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          final billingCycleProvider = Provider.of<BillingCycleProvider>(
-            context,
-            listen: false,
-          );
-          final dailyReadingProvider = Provider.of<DailyReadingProvider>(
-            context,
-            listen: false,
-          );
-          await Future.wait([
-            billingCycleProvider.fetchBillingCycles(),
-            dailyReadingProvider.fetchDailyReadings(),
-            dailyReadingProvider.fetchDailyUnits(),
-          ]);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Section
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
-                  final user = authProvider.user;
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                        left: 4, top: 8, right: 4, bottom: 8),
-                    child: Row(
+      body: Consumer<BillingCycleProvider>(
+        builder: (context, billingCycleProvider, child) {
+          final activeCycle = billingCycleProvider.activeCycle;
+          if (activeCycle == null) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Welcome Section
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      final user = authProvider.user;
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                            left: 4, top: 8, right: 4, bottom: 8),
+                        child: Row(
+                          children: [
+                            Text('Welcome, ',
+                                style: Theme.of(context).textTheme.bodyLarge),
+                            Text(
+                              user?.name ?? '',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  // Warning Card
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.amber[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.amber[200]!, width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Welcome, ',
-                            style: Theme.of(context).textTheme.bodyLarge),
-                        Text(
-                          user?.name ?? '',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                        Row(
+                          children: const [
+                            Icon(Icons.warning_amber_rounded,
+                                color: Colors.amber, size: 24),
+                            SizedBox(width: 8),
+                            Text(
+                              'No Active Billing Cycle',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'You need to create a billing cycle before adding readings.',
+                          style: TextStyle(fontSize: 15, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.amber[700],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            textStyle:
+                                const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () {
+                            Navigator.pushNamed(
+                                context, AppRoutes.billingCycleCreate);
+                          },
+                          child: const Text('CREATE BILLING CYCLE'),
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 24),
-
-              // Billing Cycles Listing Card (for comparison)
-              Consumer<BillingCycleProvider>(
-                builder: (context, billingCycleProvider, child) {
-                  final activeCycle = billingCycleProvider.activeCycle;
-                  if (activeCycle == null) return const SizedBox.shrink();
-                  return _buildCycleCard(context, activeCycle);
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Daily Reading Chart
-              Consumer2<BillingCycleProvider, DailyReadingProvider>(
-                builder: (context, billingCycleProvider, dailyReadingProvider,
-                    child) {
-                  final activeCycle = billingCycleProvider.activeCycle;
-                  if (activeCycle == null) return const SizedBox.shrink();
-                  final readings = dailyReadingProvider.dailyReadings
-                      .where((r) => r.billingCycleId == activeCycle.id)
-                      .toList()
-                    ..sort((a, b) => a.readingDate.compareTo(b.readingDate));
-
-                  if (dailyReadingProvider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (readings.isEmpty) {
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
+            );
+          }
+          // If active cycle exists, show the full dashboard content
+          return RefreshIndicator(
+            onRefresh: () async {
+              final billingCycleProvider = Provider.of<BillingCycleProvider>(
+                context,
+                listen: false,
+              );
+              final dailyReadingProvider = Provider.of<DailyReadingProvider>(
+                context,
+                listen: false,
+              );
+              await Future.wait([
+                billingCycleProvider.fetchBillingCycles(),
+                dailyReadingProvider.fetchDailyReadings(),
+                dailyReadingProvider.fetchDailyUnits(),
+              ]);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Welcome Section
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      final user = authProvider.user;
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                            left: 4, top: 8, right: 4, bottom: 8),
+                        child: Row(
                           children: [
-                            Icon(Icons.show_chart,
-                                color: AppTheme.primaryColor, size: 40),
-                            const SizedBox(height: 12),
-                            Text('No readings yet for this cycle.',
-                                style: Theme.of(context).textTheme.bodyMedium),
+                            Text('Welcome, ',
+                                style: Theme.of(context).textTheme.bodyLarge),
+                            Text(
+                              user?.name ?? '',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
-                      ),
-                    );
-                  }
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.show_chart,
-                                  color: AppTheme.primaryColor),
-                              const SizedBox(width: 8),
-                              Text('Daily Reading Trend',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            height: 220,
-                            child: LineChart(
-                              LineChartData(
-                                gridData: FlGridData(
-                                    show: true, drawVerticalLine: false),
-                                titlesData: FlTitlesData(
-                                  leftTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                        showTitles: true, reservedSize: 40),
-                                  ),
-                                  bottomTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      getTitlesWidget: (value, meta) {
-                                        final idx = value.toInt();
-                                        if (idx < 0 || idx >= readings.length)
-                                          return const SizedBox.shrink();
-                                        final date = readings[idx].readingDate;
-                                        return Text('${date.month}/${date.day}',
-                                            style:
-                                                const TextStyle(fontSize: 10));
-                                      },
-                                      interval: (readings.length / 6)
-                                          .ceilToDouble()
-                                          .clamp(1, double.infinity),
-                                    ),
-                                  ),
-                                  rightTitles: AxisTitles(
-                                      sideTitles:
-                                          SideTitles(showTitles: false)),
-                                  topTitles: AxisTitles(
-                                      sideTitles:
-                                          SideTitles(showTitles: false)),
-                                ),
-                                borderData: FlBorderData(
-                                    show: true,
-                                    border: Border.all(
-                                        color: AppTheme.lightDivider)),
-                                minX: 0,
-                                maxX: (readings.length - 1).toDouble(),
-                                minY: readings
-                                    .map((r) => r.readingValue)
-                                    .reduce((a, b) => a < b ? a : b),
-                                maxY: readings
-                                    .map((r) => r.readingValue)
-                                    .reduce((a, b) => a > b ? a : b),
-                                lineBarsData: [
-                                  LineChartBarData(
-                                    spots: [
-                                      for (int i = 0; i < readings.length; i++)
-                                        FlSpot(i.toDouble(),
-                                            readings[i].readingValue),
-                                    ],
-                                    isCurved: true,
-                                    color: AppTheme.primaryColor,
-                                    barWidth: 3,
-                                    dotData: FlDotData(show: true),
-                                    belowBarData: BarAreaData(
-                                      show: true,
-                                      color: AppTheme.primaryColor
-                                          .withOpacity(0.15),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  // Billing Cycles Listing Card (for comparison)
+                  _buildCycleCard(context, activeCycle),
+                  const SizedBox(height: 24),
+                  // Daily Reading Chart
+                  Consumer2<BillingCycleProvider, DailyReadingProvider>(
+                    builder: (context, billingCycleProvider,
+                        dailyReadingProvider, child) {
+                      final activeCycle = billingCycleProvider.activeCycle;
+                      if (activeCycle == null) return const SizedBox.shrink();
+                      final readings = dailyReadingProvider.dailyReadings
+                          .where((r) => r.billingCycleId == activeCycle.id)
+                          .toList()
+                        ..sort(
+                            (a, b) => a.readingDate.compareTo(b.readingDate));
+
+                      if (dailyReadingProvider.isLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (readings.isEmpty) {
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                Icon(Icons.show_chart,
+                                    color: AppTheme.primaryColor, size: 40),
+                                const SizedBox(height: 12),
+                                Text('No readings yet for this cycle.',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Daily Units Bar Chart
-              Consumer<DailyReadingProvider>(
-                builder: (context, dailyReadingProvider, child) {
-                  if (dailyReadingProvider.isUnitsLoading) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  if (dailyReadingProvider.unitsError != null) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Card(
-                        color: AppTheme.errorColor.withOpacity(0.1),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
-                            children: [
-                              Icon(Icons.error, color: AppTheme.errorColor),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  dailyReadingProvider.unitsError!,
-                                  style: TextStyle(color: AppTheme.errorColor),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  final units = dailyReadingProvider.dailyUnits;
-                  if (units.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Card(
+                        );
+                      }
+                      return Card(
                         child: Padding(
                           padding: const EdgeInsets.all(20),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.bar_chart,
-                                  color: AppTheme.primaryColor, size: 40),
-                              const SizedBox(height: 12),
-                              Text('No daily units data yet.',
-                                  style:
-                                      Theme.of(context).textTheme.bodyMedium),
+                              Row(
+                                children: [
+                                  Icon(Icons.show_chart,
+                                      color: AppTheme.primaryColor),
+                                  const SizedBox(width: 8),
+                                  Text('Daily Reading Trend',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 240,
+                                child: LineChart(
+                                  LineChartData(
+                                    gridData: FlGridData(
+                                      show: true,
+                                      drawVerticalLine: false,
+                                      getDrawingHorizontalLine: (value) =>
+                                          FlLine(
+                                        color: Colors.grey.withOpacity(0.15),
+                                        strokeWidth: 1,
+                                      ),
+                                    ),
+                                    titlesData: FlTitlesData(
+                                      leftTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          reservedSize: 40,
+                                          getTitlesWidget: (value, meta) =>
+                                              Text(
+                                            value.toStringAsFixed(0),
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey[700]),
+                                          ),
+                                        ),
+                                      ),
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          getTitlesWidget: (value, meta) {
+                                            final idx = value.toInt();
+                                            if (idx < 0 ||
+                                                idx >= readings.length)
+                                              return const SizedBox.shrink();
+                                            final date =
+                                                readings[idx].readingDate;
+                                            return Text(
+                                              '${date.month}/${date.day}',
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey[700]),
+                                            );
+                                          },
+                                          interval: (readings.length / 6)
+                                              .ceilToDouble()
+                                              .clamp(1, double.infinity),
+                                        ),
+                                      ),
+                                      rightTitles: AxisTitles(
+                                          sideTitles:
+                                              SideTitles(showTitles: false)),
+                                      topTitles: AxisTitles(
+                                          sideTitles:
+                                              SideTitles(showTitles: false)),
+                                    ),
+                                    borderData: FlBorderData(show: false),
+                                    minX: 0,
+                                    maxX: (readings.length - 1).toDouble(),
+                                    minY: readings
+                                        .map((r) => r.readingValue)
+                                        .reduce((a, b) => a < b ? a : b),
+                                    maxY: readings
+                                        .map((r) => r.readingValue)
+                                        .reduce((a, b) => a > b ? a : b),
+                                    lineBarsData: [
+                                      LineChartBarData(
+                                        spots: [
+                                          for (int i = 0;
+                                              i < readings.length;
+                                              i++)
+                                            FlSpot(i.toDouble(),
+                                                readings[i].readingValue),
+                                        ],
+                                        isCurved: true,
+                                        color: AppTheme.primaryColor,
+                                        barWidth: 4,
+                                        dotData: FlDotData(
+                                          show: true,
+                                          getDotPainter:
+                                              (spot, percent, bar, index) =>
+                                                  FlDotCirclePainter(
+                                            radius: 6,
+                                            color: Colors.white,
+                                            strokeWidth: 3,
+                                            strokeColor: AppTheme.primaryColor,
+                                          ),
+                                        ),
+                                        belowBarData: BarAreaData(
+                                          show: true,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              AppTheme.primaryColor
+                                                  .withOpacity(0.2),
+                                              Colors.transparent,
+                                            ],
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    lineTouchData: LineTouchData(
+                                      touchTooltipData: LineTouchTooltipData(
+                                        tooltipBgColor: AppTheme.primaryColor,
+                                        tooltipRoundedRadius: 10,
+                                        tooltipPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 8),
+                                        getTooltipItems: (touchedSpots) =>
+                                            touchedSpots.map((spot) {
+                                          return LineTooltipItem(
+                                            '${spot.y.toStringAsFixed(1)} units',
+                                            const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ),
-                    );
-                  }
-                  return Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.bar_chart,
-                                  color: AppTheme.primaryColor),
-                              const SizedBox(width: 8),
-                              Text('Daily Units Consumption',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'How many units you used each day in this cycle',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: Colors.grey[600]),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 220,
-                            child: BarChart(
-                              BarChartData(
-                                barTouchData: BarTouchData(
-                                  enabled: true,
-                                  touchTooltipData: BarTouchTooltipData(
-                                    tooltipBgColor: Colors.white,
-                                    tooltipRoundedRadius: 12,
-                                    tooltipPadding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 8),
-                                    getTooltipItem:
-                                        (group, groupIndex, rod, rodIndex) {
-                                      final idx = group.x.toInt();
-                                      final date = units[idx].date;
-                                      return BarTooltipItem(
-                                        '${date.substring(5)}\n',
-                                        const TextStyle(
-                                          color: Colors.black87,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
-                                        children: [
-                                          TextSpan(
-                                            text:
-                                                '${rod.toY.toStringAsFixed(2)} units',
-                                            style: const TextStyle(
-                                              color: Colors.black54,
-                                              fontWeight: FontWeight.normal,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),
-                                ),
-                                gridData: FlGridData(
-                                  show: true,
-                                  drawVerticalLine: false,
-                                  getDrawingHorizontalLine: (value) => FlLine(
-                                    color: AppTheme.lightDivider,
-                                    strokeWidth: 1,
-                                  ),
-                                ),
-                                titlesData: FlTitlesData(
-                                  leftTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                        showTitles: true, reservedSize: 40),
-                                  ),
-                                  bottomTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      getTitlesWidget: (value, meta) {
-                                        final idx = value.toInt();
-                                        if (idx < 0 || idx >= units.length)
-                                          return const SizedBox.shrink();
-                                        final date = units[idx].date;
-                                        return Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 4),
-                                          child: Text(
-                                            date.substring(5),
-                                            style: const TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w600),
-                                          ),
-                                        );
-                                      },
-                                      interval: (units.length / 6)
-                                          .ceilToDouble()
-                                          .clamp(1, double.infinity),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Daily Units Bar Chart
+                  Consumer<DailyReadingProvider>(
+                    builder: (context, dailyReadingProvider, child) {
+                      if (dailyReadingProvider.isUnitsLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      if (dailyReadingProvider.unitsError != null) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Card(
+                            color: AppTheme.errorColor.withOpacity(0.1),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error, color: AppTheme.errorColor),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      dailyReadingProvider.unitsError!,
+                                      style:
+                                          TextStyle(color: AppTheme.errorColor),
                                     ),
                                   ),
-                                  rightTitles: AxisTitles(
-                                      sideTitles:
-                                          SideTitles(showTitles: false)),
-                                  topTitles: AxisTitles(
-                                      sideTitles:
-                                          SideTitles(showTitles: false)),
-                                ),
-                                borderData: FlBorderData(
-                                  show: true,
-                                  border:
-                                      Border.all(color: AppTheme.lightDivider),
-                                ),
-                                minY: 0,
-                                maxY: units
-                                        .map((u) => u.unitsConsumed)
-                                        .fold<double>(0,
-                                            (prev, e) => e > prev ? e : prev) +
-                                    1,
-                                barGroups: [
-                                  for (int i = 0; i < units.length; i++)
-                                    BarChartGroupData(
-                                      x: i,
-                                      barRods: [
-                                        BarChartRodData(
-                                          toY: units[i].unitsConsumed,
-                                          color: AppTheme.primaryColor,
-                                          width: 18,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          borderSide: BorderSide.none,
-                                          backDrawRodData:
-                                              BackgroundBarChartRodData(
-                                            show: true,
-                                            toY: 0,
-                                            color: AppTheme.primaryColor
-                                                .withOpacity(0.08),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                                 ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      }
+                      final units = dailyReadingProvider.dailyUnits;
+                      if (units.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.bar_chart,
+                                      color: AppTheme.primaryColor, size: 40),
+                                  const SizedBox(height: 12),
+                                  Text('No daily units data yet.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.bar_chart,
+                                      color: AppTheme.primaryColor),
+                                  const SizedBox(width: 8),
+                                  Text('Daily Units Consumption',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'How many units you used each day in this cycle',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: Colors.grey[600]),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                height: 220,
+                                child: BarChart(
+                                  BarChartData(
+                                    barTouchData: BarTouchData(
+                                      enabled: true,
+                                      touchTooltipData: BarTouchTooltipData(
+                                        tooltipBgColor: Colors.white,
+                                        tooltipRoundedRadius: 12,
+                                        tooltipPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 8),
+                                        getTooltipItem:
+                                            (group, groupIndex, rod, rodIndex) {
+                                          final idx = group.x.toInt();
+                                          final date = units[idx].date;
+                                          return BarTooltipItem(
+                                            '${date.substring(5)}\n',
+                                            const TextStyle(
+                                              color: Colors.black87,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
+                                            children: [
+                                              TextSpan(
+                                                text:
+                                                    '${rod.toY.toStringAsFixed(2)} units',
+                                                style: const TextStyle(
+                                                  color: Colors.black54,
+                                                  fontWeight: FontWeight.normal,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    gridData: FlGridData(
+                                      show: true,
+                                      drawVerticalLine: false,
+                                      getDrawingHorizontalLine: (value) =>
+                                          FlLine(
+                                        color: AppTheme.lightDivider,
+                                        strokeWidth: 1,
+                                      ),
+                                    ),
+                                    titlesData: FlTitlesData(
+                                      leftTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                            showTitles: true, reservedSize: 40),
+                                      ),
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          getTitlesWidget: (value, meta) {
+                                            final idx = value.toInt();
+                                            if (idx < 0 || idx >= units.length)
+                                              return const SizedBox.shrink();
+                                            final date = units[idx].date;
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 4),
+                                              child: Text(
+                                                date.substring(5),
+                                                style: const TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
+                                            );
+                                          },
+                                          interval: (units.length / 6)
+                                              .ceilToDouble()
+                                              .clamp(1, double.infinity),
+                                        ),
+                                      ),
+                                      rightTitles: AxisTitles(
+                                          sideTitles:
+                                              SideTitles(showTitles: false)),
+                                      topTitles: AxisTitles(
+                                          sideTitles:
+                                              SideTitles(showTitles: false)),
+                                    ),
+                                    borderData: FlBorderData(
+                                      show: true,
+                                      border: Border.all(
+                                          color: AppTheme.lightDivider),
+                                    ),
+                                    minY: 0,
+                                    maxY: units
+                                            .map((u) => u.unitsConsumed)
+                                            .fold<double>(
+                                                0,
+                                                (prev, e) =>
+                                                    e > prev ? e : prev) +
+                                        1,
+                                    barGroups: [
+                                      for (int i = 0; i < units.length; i++)
+                                        BarChartGroupData(
+                                          x: i,
+                                          barRods: [
+                                            BarChartRodData(
+                                              toY: units[i].unitsConsumed,
+                                              color: AppTheme.primaryColor,
+                                              width: 18,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide.none,
+                                              backDrawRodData:
+                                                  BackgroundBarChartRodData(
+                                                show: true,
+                                                toY: 0,
+                                                color: AppTheme.primaryColor
+                                                    .withOpacity(0.08),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Quick Actions
+                  Text(
+                    'Quick Actions',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                          context, AppRoutes.dailyReadingCreate);
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add New Reading'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                     ),
-                  );
-                },
-              ),
+                  ),
 
-              const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              // Quick Actions
-              Text(
-                'Quick Actions',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // Recent Readings
+                  Text(
+                    'Recent Readings',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildRecentReadings(context),
+                ],
               ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.dailyReadingCreate);
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add New Reading'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Recent Readings
-              Text(
-                'Recent Readings',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 16),
-              _buildRecentReadings(context),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

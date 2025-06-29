@@ -32,29 +32,36 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 60),
-
-                // App Logo
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                // App Name and Logo
+                Column(
+                  children: [
+                    Text(
+                      'Bill Tracker',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.electric_meter,
-                    size: 50,
-                    color: Colors.white,
-                  ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        // No color or boxShadow for transparent background
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Image.asset(
+                          'assets/app_icon.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-
                 const SizedBox(height: 30),
 
                 // Welcome Text
@@ -242,47 +249,24 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = formState.value['email'] as String;
     final password = formState.value['password'] as String;
     final success = await authProvider.login(email, password);
-    if (context.mounted) Navigator.pop(context); // Close loading dialog
+
     if (success) {
-      if (context.mounted) {
-        // Fetch data before navigating
-        final billingCycleProvider =
-            Provider.of<BillingCycleProvider>(context, listen: false);
-        final dailyReadingProvider =
-            Provider.of<DailyReadingProvider>(context, listen: false);
-        await Future.wait([
-          billingCycleProvider.fetchBillingCycles(),
-          dailyReadingProvider.fetchDailyReadings(),
-        ]);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authProvider.error ?? 'Login successful!'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.only(
-              top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
-              left: 20,
-              right: 20,
-              bottom: 16,
-            ),
-          ),
-        );
-        Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
-      }
-    } else if (authProvider.error != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.error!),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.only(
-            top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
-            left: 20,
-            right: 20,
-            bottom: 16,
-          ),
-        ),
-      );
+      // Fetch data before closing the spinner and navigating
+      final billingCycleProvider =
+          Provider.of<BillingCycleProvider>(context, listen: false);
+      final dailyReadingProvider =
+          Provider.of<DailyReadingProvider>(context, listen: false);
+      await Future.wait([
+        billingCycleProvider.fetchBillingCycles(),
+        dailyReadingProvider.fetchDailyReadings(),
+        dailyReadingProvider.fetchDailyUnits(),
+      ]);
+    }
+
+    if (context.mounted) Navigator.pop(context); // Close loading dialog
+
+    if (success && context.mounted) {
+      Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
     }
   }
 
