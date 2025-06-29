@@ -381,6 +381,7 @@ class ProfileScreen extends StatelessWidget {
                                     8,
                                 left: 20,
                                 right: 20,
+                                bottom: 16,
                               ),
                             ),
                           );
@@ -398,6 +399,7 @@ class ProfileScreen extends StatelessWidget {
                                     8,
                                 left: 20,
                                 right: 20,
+                                bottom: 16,
                               ),
                             ),
                           );

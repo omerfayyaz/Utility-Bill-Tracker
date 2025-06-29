@@ -36,6 +36,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Fetch all dashboard data on start/login
+    Future.microtask(() async {
+      final billingCycleProvider =
+          Provider.of<BillingCycleProvider>(context, listen: false);
+      final dailyReadingProvider =
+          Provider.of<DailyReadingProvider>(context, listen: false);
+      await Future.wait([
+        billingCycleProvider.fetchBillingCycles(),
+        dailyReadingProvider.fetchDailyReadings(),
+        dailyReadingProvider.fetchDailyUnits(),
+      ]);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_mapNavIndexToScreenIndex(_currentIndex)],
@@ -135,6 +152,7 @@ class _HomeTabState extends State<HomeTab> {
           await Future.wait([
             billingCycleProvider.fetchBillingCycles(),
             dailyReadingProvider.fetchDailyReadings(),
+            dailyReadingProvider.fetchDailyUnits(),
           ]);
         },
         child: SingleChildScrollView(

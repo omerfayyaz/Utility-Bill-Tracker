@@ -263,6 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
               top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
               left: 20,
               right: 20,
+              bottom: 16,
             ),
           ),
         );
@@ -278,6 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
             top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
             left: 20,
             right: 20,
+            bottom: 16,
           ),
         ),
       );

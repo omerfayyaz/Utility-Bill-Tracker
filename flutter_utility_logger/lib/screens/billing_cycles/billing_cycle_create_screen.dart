@@ -55,6 +55,7 @@ class _BillingCycleCreateScreenState extends State<BillingCycleCreateScreen> {
               top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
               left: 20,
               right: 20,
+              bottom: 16,
             ),
           ),
         );
@@ -70,6 +71,7 @@ class _BillingCycleCreateScreenState extends State<BillingCycleCreateScreen> {
             top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
             left: 20,
             right: 20,
+            bottom: 16,
           ),
         ),
       );

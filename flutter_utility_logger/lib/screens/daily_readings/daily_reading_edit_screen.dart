@@ -13,19 +13,20 @@ class DailyReadingEditScreen extends StatefulWidget {
 
 class _DailyReadingEditScreenState extends State<DailyReadingEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  late DateTime _readingDate;
+  DateTime? _readingDate;
   late TimeOfDay _readingTime;
   late TextEditingController _readingValueController;
   late TextEditingController _notesController;
   bool _isSubmitting = false;
   String? _error;
   late DailyReading reading;
+  bool _initialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)!.settings.arguments;
-    if (args is DailyReading) {
+    if (!_initialized && args is DailyReading) {
       reading = args;
       _readingDate = reading.readingDate;
       _readingTime = TimeOfDay(
@@ -33,6 +34,7 @@ class _DailyReadingEditScreenState extends State<DailyReadingEditScreen> {
       _readingValueController =
           TextEditingController(text: reading.readingValue.toString());
       _notesController = TextEditingController(text: reading.notes ?? '');
+      _initialized = true;
     }
   }
 
@@ -52,7 +54,7 @@ class _DailyReadingEditScreenState extends State<DailyReadingEditScreen> {
     final provider = Provider.of<DailyReadingProvider>(context, listen: false);
     final success = await provider.updateDailyReading(
       id: reading.id,
-      readingDate: _readingDate,
+      readingDate: _readingDate!,
       readingTime: _readingTime,
       readingValue: double.tryParse(_readingValueController.text.trim()),
       notes: _notesController.text.trim().isEmpty
@@ -65,6 +67,8 @@ class _DailyReadingEditScreenState extends State<DailyReadingEditScreen> {
     });
     if (success) {
       if (context.mounted) {
+        await Provider.of<DailyReadingProvider>(context, listen: false)
+            .fetchDailyUnits();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(provider.error ?? 'Reading updated successfully!'),
@@ -74,6 +78,7 @@ class _DailyReadingEditScreenState extends State<DailyReadingEditScreen> {
               top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
               left: 20,
               right: 20,
+              bottom: 16,
             ),
           ),
         );
@@ -89,6 +94,7 @@ class _DailyReadingEditScreenState extends State<DailyReadingEditScreen> {
             top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
             left: 20,
             right: 20,
+            bottom: 16,
           ),
         ),
       );

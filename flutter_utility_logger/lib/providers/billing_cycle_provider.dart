@@ -108,15 +108,7 @@ class BillingCycleProvider with ChangeNotifier {
       if (response.statusCode == 201) {
         final responseJson = json.decode(response.body);
         if (responseJson['success'] == true) {
-          final data = responseJson['data'];
-          final newCycle = BillingCycle.fromJson(data);
-          _billingCycles.add(newCycle);
-
-          // If this is the first cycle or marked as active, set it as active
-          if (newCycle.isActive || _billingCycles.length == 1) {
-            _activeCycle = newCycle;
-          }
-
+          await fetchBillingCycles();
           await saveToLocalStorage();
           notifyListeners();
           return true;

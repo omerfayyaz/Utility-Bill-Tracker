@@ -80,7 +80,21 @@ class _SplashScreenState extends State<SplashScreen> {
     final isLoggedIn = await authProvider.checkAuthStatus();
 
     if (isLoggedIn) {
-      Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+      // Load data before navigating to dashboard
+      final billingCycleProvider =
+          Provider.of<BillingCycleProvider>(context, listen: false);
+      final dailyReadingProvider =
+          Provider.of<DailyReadingProvider>(context, listen: false);
+
+      await Future.wait([
+        billingCycleProvider.fetchBillingCycles(),
+        dailyReadingProvider.fetchDailyReadings(),
+        dailyReadingProvider.fetchDailyUnits(),
+      ]);
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+      }
     } else {
       Navigator.pushReplacementNamed(context, AppRoutes.login);
     }

@@ -100,6 +100,7 @@ class _DailyReadingCreateScreenState extends State<DailyReadingCreateScreen> {
               top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
               left: 20,
               right: 20,
+              bottom: 16,
             ),
           ),
         );
@@ -115,6 +116,7 @@ class _DailyReadingCreateScreenState extends State<DailyReadingCreateScreen> {
             top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
             left: 20,
             right: 20,
+            bottom: 16,
           ),
         ),
       );
