@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/billing_cycle_provider.dart';
+import '../../providers/daily_reading_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/theme.dart';
 import 'register_screen.dart';
@@ -232,11 +234,26 @@ class _LoginScreenState extends State<LoginScreen> {
     final formState = _formKey.currentState;
     if (formState == null || !formState.saveAndValidate()) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
     final email = formState.value['email'] as String;
     final password = formState.value['password'] as String;
     final success = await authProvider.login(email, password);
+    if (context.mounted) Navigator.pop(context); // Close loading dialog
     if (success) {
       if (context.mounted) {
+        // Fetch data before navigating
+        final billingCycleProvider =
+            Provider.of<BillingCycleProvider>(context, listen: false);
+        final dailyReadingProvider =
+            Provider.of<DailyReadingProvider>(context, listen: false);
+        await Future.wait([
+          billingCycleProvider.fetchBillingCycles(),
+          dailyReadingProvider.fetchDailyReadings(),
+        ]);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(authProvider.error ?? 'Login successful!'),

@@ -141,6 +141,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> logout() async {
     _setLoading(true);
+    _clearError();
     try {
       if (_token != null) {
         await http.post(
@@ -154,12 +155,22 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       // Ignore logout errors
+    } finally {
+      _user = null;
+      _token = null;
+      await _clearAuthData();
+      _setLoading(false);
+      notifyListeners();
     }
+    return true;
+  }
+
+  // Optionally expose a public clearAuthData for UI use
+  Future<void> clearAuthData() async {
     _user = null;
     _token = null;
     await _clearAuthData();
-    _setLoading(false);
-    return true;
+    notifyListeners();
   }
 
   void _setLoading(bool loading) {

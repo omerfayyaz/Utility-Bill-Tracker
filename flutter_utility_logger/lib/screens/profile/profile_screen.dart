@@ -344,28 +344,56 @@ class ProfileScreen extends StatelessWidget {
   void _showLogoutDialog(BuildContext context, AuthProvider authProvider) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text(
-          'Are you sure you want to logout? You will need to sign in again to access your data.',
+      barrierDismissible: !authProvider.isLoading,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Logout'),
+          content: authProvider.isLoading
+              ? const SizedBox(
+                  height: 60,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : const Text(
+                  'Are you sure you want to logout? You will need to sign in again to access your data.',
+                ),
+          actions: authProvider.isLoading
+              ? []
+              : [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      setState(() {}); // trigger loading
+                      final success = await authProvider.logout();
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Logged out successfully.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.pushReplacementNamed(
+                              context, AppRoutes.login);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Logout failed. Please try again.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.errorColor),
+                    child: const Text('Logout'),
+                  ),
+                ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final success = await authProvider.logout();
-              if (success && context.mounted) {
-                Navigator.pushReplacementNamed(context, AppRoutes.login);
-              }
-            },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
-            child: const Text('Logout'),
-          ),
-        ],
       ),
     );
   }
