@@ -496,4 +496,61 @@ class DailyReadingController extends Controller
             ], 500);
         }
     }
+
+    // API: Daily units consumption for active cycle (for bar graph only)
+    // Returns one entry per date, summing all units consumed for that date
+    public function apiDailyUnits(Request $request)
+    {
+        try {
+            \Log::info('API /api/daily-units [GET] called', [
+                'user_id' => $request->user()->id,
+                'ip' => $request->ip(),
+            ]);
+            $activeCycle = $request->user()->billingCycles()->where('is_active', true)->first();
+            if (!$activeCycle) {
+                return response()->json([
+                    'success' => true,
+                    'status' => 'success',
+                    'data' => [],
+                    'message' => 'No active billing cycle.'
+                ]);
+            }
+            $readings = $activeCycle->dailyReadings()
+                ->orderBy('reading_date', 'asc')
+                ->orderBy('reading_time', 'asc')
+                ->get();
+
+            $prevValue = $activeCycle->start_reading;
+            $dateSums = [];
+
+            foreach ($readings as $reading) {
+                $date = $reading->reading_date->format('Y-m-d');
+                $units = $reading->reading_value - $prevValue;
+                $dateSums[$date][] = $units >= 0 ? $units : 0;
+                $prevValue = $reading->reading_value;
+            }
+
+            $result = [];
+            foreach ($dateSums as $date => $unitsArr) {
+                $result[] = [
+                    'date' => $date,
+                    'units_consumed' => round(array_sum($unitsArr), 2),
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'data' => $result,
+                'message' => 'Daily units consumption fetched successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'data' => [],
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
