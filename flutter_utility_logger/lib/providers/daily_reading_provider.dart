@@ -11,10 +11,18 @@ class DailyReadingProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  List<DailyUnit> _dailyUnits = [];
+  bool _isUnitsLoading = false;
+  String? _unitsError;
+
   // Getters
   List<DailyReading> get dailyReadings => _dailyReadings;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  List<DailyUnit> get dailyUnits => _dailyUnits;
+  bool get isUnitsLoading => _isUnitsLoading;
+  String? get unitsError => _unitsError;
 
   // Computed properties
   List<DailyReading> get sortedReadings {
@@ -363,4 +371,51 @@ class DailyReadingProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  Future<void> fetchDailyUnits() async {
+    _isUnitsLoading = true;
+    _unitsError = null;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token == null) throw Exception('Authentication token not found');
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}/api/daily-units'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+      if (response.statusCode == 200) {
+        final responseJson = json.decode(response.body);
+        if (responseJson['success'] == true) {
+          final List<dynamic> data = responseJson['data'];
+          _dailyUnits = data.map((json) => DailyUnit.fromJson(json)).toList();
+        } else {
+          throw Exception(
+              responseJson['message'] ?? 'Failed to fetch daily units');
+        }
+      } else {
+        throw Exception('Failed to fetch daily units: ${response.statusCode}');
+      }
+    } catch (e) {
+      _unitsError = e.toString();
+      debugPrint('Error fetching daily units: $e');
+    } finally {
+      _isUnitsLoading = false;
+      notifyListeners();
+    }
+  }
+}
+
+class DailyUnit {
+  final String date;
+  final double unitsConsumed;
+  DailyUnit({required this.date, required this.unitsConsumed});
+  factory DailyUnit.fromJson(Map<String, dynamic> json) => DailyUnit(
+        date: json['date'],
+        unitsConsumed: (json['units_consumed'] as num).toDouble(),
+      );
 }

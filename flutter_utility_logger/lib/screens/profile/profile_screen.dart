@@ -371,18 +371,34 @@ class ProfileScreen extends StatelessWidget {
                         Navigator.pop(context);
                         if (success) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text('Logged out successfully.'),
                               backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              margin: EdgeInsets.only(
+                                top: kToolbarHeight +
+                                    MediaQuery.of(context).padding.top +
+                                    8,
+                                left: 20,
+                                right: 20,
+                              ),
                             ),
                           );
                           Navigator.pushReplacementNamed(
                               context, AppRoutes.login);
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text('Logout failed. Please try again.'),
                               backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              margin: EdgeInsets.only(
+                                top: kToolbarHeight +
+                                    MediaQuery.of(context).padding.top +
+                                    8,
+                                left: 20,
+                                right: 20,
+                              ),
                             ),
                           );
                         }

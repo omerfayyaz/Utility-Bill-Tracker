@@ -67,13 +67,30 @@ class _DailyReadingEditScreenState extends State<DailyReadingEditScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(provider.error ?? 'Reading updated successfully!')),
+            content: Text(provider.error ?? 'Reading updated successfully!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
+              left: 20,
+              right: 20,
+            ),
+          ),
         );
         Navigator.of(context).pop(true);
       }
     } else if (_error != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_error!), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(_error!),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
+            left: 20,
+            right: 20,
+          ),
+        ),
       );
     }
   }

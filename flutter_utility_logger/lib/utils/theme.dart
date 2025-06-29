@@ -64,7 +64,7 @@ class AppTheme {
         fontWeight: FontWeight.w700,
       ),
       iconTheme: IconThemeData(color: lightText),
-    ),
+      ),
     cardTheme: cardTheme,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(

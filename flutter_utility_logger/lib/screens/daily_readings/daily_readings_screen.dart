@@ -170,9 +170,9 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
                 Text(
                   _formatDate(date),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[700],
+                  ),
                 ),
                 const Spacer(),
                 Text(
@@ -249,14 +249,14 @@ class _DailyReadingsScreenState extends State<DailyReadingsScreen> {
                 consumed > 0
                     ? '+${consumed.toStringAsFixed(2)} consumed'
                     : consumed < 0
-                        ? '${consumed.toStringAsFixed(2)} consumed'
-                        : 'No change',
+                    ? '${consumed.toStringAsFixed(2)} consumed'
+                    : 'No change',
                 style: TextStyle(
                   color: consumed > 0
                       ? AppTheme.successColor
                       : consumed < 0
-                          ? AppTheme.errorColor
-                          : Colors.grey[600],
+                      ? AppTheme.errorColor
+                      : Colors.grey[600],
                   fontSize: 12,
                 ),
               ),

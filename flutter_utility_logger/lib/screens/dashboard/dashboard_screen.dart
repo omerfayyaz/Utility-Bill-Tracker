@@ -9,6 +9,7 @@ import '../billing_cycles/billing_cycles_screen.dart';
 import '../daily_readings/daily_readings_screen.dart';
 import '../profile/profile_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../models/billing_cycle.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -90,8 +91,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class HomeTab extends StatelessWidget {
+class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
+
+  @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch daily units for the bar chart
+    Future.microtask(() =>
+        Provider.of<DailyReadingProvider>(context, listen: false)
+            .fetchDailyUnits());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,60 +147,19 @@ class HomeTab extends StatelessWidget {
               Consumer<AuthProvider>(
                 builder: (context, authProvider, child) {
                   final user = authProvider.user;
-                  return Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.primaryColor,
-                          AppTheme.primaryColor.withOpacity(0.8),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                  return Padding(
+                    padding: const EdgeInsets.only(
+                        left: 4, top: 8, right: 4, bottom: 8),
                     child: Row(
                       children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome back,',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: Colors.white.withOpacity(0.8),
-                                    ),
-                              ),
-                              Text(
-                                user?.name ?? 'User',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                            ],
-                          ),
+                        Text('Welcome, ',
+                            style: Theme.of(context).textTheme.bodyLarge),
+                        Text(
+                          user?.name ?? '',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -195,20 +169,12 @@ class HomeTab extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Active Cycle Section
+              // Billing Cycles Listing Card (for comparison)
               Consumer<BillingCycleProvider>(
                 builder: (context, billingCycleProvider, child) {
                   final activeCycle = billingCycleProvider.activeCycle;
-
-                  if (billingCycleProvider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (activeCycle == null) {
-                    return _buildNoActiveCycleCard(context);
-                  }
-
-                  return _buildActiveCycleCard(context, activeCycle);
+                  if (activeCycle == null) return const SizedBox.shrink();
+                  return _buildCycleCard(context, activeCycle);
                 },
               ),
 
@@ -340,6 +306,216 @@ class HomeTab extends StatelessWidget {
 
               const SizedBox(height: 24),
 
+              // Daily Units Bar Chart
+              Consumer<DailyReadingProvider>(
+                builder: (context, dailyReadingProvider, child) {
+                  if (dailyReadingProvider.isUnitsLoading) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (dailyReadingProvider.unitsError != null) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Card(
+                        color: AppTheme.errorColor.withOpacity(0.1),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              Icon(Icons.error, color: AppTheme.errorColor),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  dailyReadingProvider.unitsError!,
+                                  style: TextStyle(color: AppTheme.errorColor),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  final units = dailyReadingProvider.dailyUnits;
+                  if (units.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              Icon(Icons.bar_chart,
+                                  color: AppTheme.primaryColor, size: 40),
+                              const SizedBox(height: 12),
+                              Text('No daily units data yet.',
+                                  style:
+                                      Theme.of(context).textTheme.bodyMedium),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return Card(
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.bar_chart,
+                                  color: AppTheme.primaryColor),
+                              const SizedBox(width: 8),
+                              Text('Daily Units Consumption',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'How many units you used each day in this cycle',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.grey[600]),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 220,
+                            child: BarChart(
+                              BarChartData(
+                                barTouchData: BarTouchData(
+                                  enabled: true,
+                                  touchTooltipData: BarTouchTooltipData(
+                                    tooltipBgColor: Colors.white,
+                                    tooltipRoundedRadius: 12,
+                                    tooltipPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    getTooltipItem:
+                                        (group, groupIndex, rod, rodIndex) {
+                                      final idx = group.x.toInt();
+                                      final date = units[idx].date;
+                                      return BarTooltipItem(
+                                        '${date.substring(5)}\n',
+                                        const TextStyle(
+                                          color: Colors.black87,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text:
+                                                '${rod.toY.toStringAsFixed(2)} units',
+                                            style: const TextStyle(
+                                              color: Colors.black54,
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                                gridData: FlGridData(
+                                  show: true,
+                                  drawVerticalLine: false,
+                                  getDrawingHorizontalLine: (value) => FlLine(
+                                    color: AppTheme.lightDivider,
+                                    strokeWidth: 1,
+                                  ),
+                                ),
+                                titlesData: FlTitlesData(
+                                  leftTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                        showTitles: true, reservedSize: 40),
+                                  ),
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      getTitlesWidget: (value, meta) {
+                                        final idx = value.toInt();
+                                        if (idx < 0 || idx >= units.length)
+                                          return const SizedBox.shrink();
+                                        final date = units[idx].date;
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 4),
+                                          child: Text(
+                                            date.substring(5),
+                                            style: const TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                        );
+                                      },
+                                      interval: (units.length / 6)
+                                          .ceilToDouble()
+                                          .clamp(1, double.infinity),
+                                    ),
+                                  ),
+                                  rightTitles: AxisTitles(
+                                      sideTitles:
+                                          SideTitles(showTitles: false)),
+                                  topTitles: AxisTitles(
+                                      sideTitles:
+                                          SideTitles(showTitles: false)),
+                                ),
+                                borderData: FlBorderData(
+                                  show: true,
+                                  border:
+                                      Border.all(color: AppTheme.lightDivider),
+                                ),
+                                minY: 0,
+                                maxY: units
+                                        .map((u) => u.unitsConsumed)
+                                        .fold<double>(0,
+                                            (prev, e) => e > prev ? e : prev) +
+                                    1,
+                                barGroups: [
+                                  for (int i = 0; i < units.length; i++)
+                                    BarChartGroupData(
+                                      x: i,
+                                      barRods: [
+                                        BarChartRodData(
+                                          toY: units[i].unitsConsumed,
+                                          color: AppTheme.primaryColor,
+                                          width: 18,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide.none,
+                                          backDrawRodData:
+                                              BackgroundBarChartRodData(
+                                            show: true,
+                                            toY: 0,
+                                            color: AppTheme.primaryColor
+                                                .withOpacity(0.08),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+
               // Quick Actions
               Text(
                 'Quick Actions',
@@ -426,138 +602,98 @@ class HomeTab extends StatelessWidget {
 
   Widget _buildActiveCycleCard(BuildContext context, dynamic activeCycle) {
     return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 18),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Text(
+              'Active Cycle',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              activeCycle.name,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Started ${activeCycle.formattedStartDate} with ${activeCycle.formattedStartReading} units',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 18),
+            Text(
+              activeCycle.formattedCurrentReading,
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Current Reading',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[700],
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 22),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppTheme.successColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Icon(
-                    Icons.calendar_today,
-                    color: AppTheme.successColor,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Active Cycle',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
-                      ),
-                      Text(
-                        activeCycle.name,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.successColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Active',
-                    style: TextStyle(
-                      color: AppTheme.successColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                Column(
+                  children: [
+                    Text(
+                      activeCycle.formattedTotalConsumed,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
-                  ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Total Consumed',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[700],
+                          ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatItem(
-                    'Current Reading',
-                    activeCycle.formattedCurrentReading,
-                    'units',
-                    Icons.speed,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatItem(
-                    'Total Consumed',
-                    activeCycle.formattedTotalConsumed,
-                    'units',
-                    Icons.trending_up,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatItem(
-                    'Days Elapsed',
-                    activeCycle.daysElapsed.toString(),
-                    'days',
-                    Icons.schedule,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatItem(
-                    'Start Reading',
-                    activeCycle.formattedStartReading,
-                    'units',
-                    Icons.start,
-                  ),
+                Column(
+                  children: [
+                    Text(
+                      activeCycle.daysElapsed.toString(),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Days Passed',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[700],
+                          ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStatItem(
-    String label,
-    String value,
-    String unit,
-    IconData icon,
-  ) {
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: AppTheme.primaryColor),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        Text(unit, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          textAlign: TextAlign.center,
-        ),
-      ],
     );
   }
 
@@ -678,6 +814,174 @@ class HomeTab extends StatelessWidget {
           }).toList(),
         );
       },
+    );
+  }
+
+  Widget _buildCycleCard(BuildContext context, BillingCycle cycle) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          // No navigation on dashboard
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: cycle.isActive
+                          ? AppTheme.successColor.withOpacity(0.1)
+                          : Colors.grey.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      Icons.calendar_today,
+                      color: cycle.isActive
+                          ? AppTheme.successColor
+                          : Colors.grey[600],
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                cycle.name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            if (cycle.isActive)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.successColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Active',
+                                  style: TextStyle(
+                                    color: AppTheme.successColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${cycle.formattedStartDate} - ${cycle.formattedEndDate}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Statistics Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatItem(
+                      'Start Reading',
+                      cycle.formattedStartReading,
+                      'units',
+                      Icons.start,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildStatItem(
+                      'Current Reading',
+                      cycle.formattedCurrentReading,
+                      'units',
+                      Icons.speed,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildStatItem(
+                      'Total Consumed',
+                      cycle.formattedTotalConsumed,
+                      'units',
+                      Icons.trending_up,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Progress Bar
+              if (cycle.isActive) ...[
+                LinearProgressIndicator(
+                  value: cycle.daysElapsedValue > 0
+                      ? (cycle.daysElapsedValue / 30).clamp(0.0, 1.0)
+                      : 0.0,
+                  backgroundColor: Colors.grey[200],
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppTheme.successColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${cycle.daysElapsedValue} days elapsed',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.grey[600]),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+    String label,
+    String value,
+    String unit,
+    IconData icon,
+  ) {
+    return Column(
+      children: [
+        Icon(icon, size: 20, color: AppTheme.primaryColor),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Text(unit, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

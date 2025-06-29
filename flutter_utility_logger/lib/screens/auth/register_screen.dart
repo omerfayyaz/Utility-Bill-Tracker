@@ -321,6 +321,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           SnackBar(
             content: Text(authProvider.error ?? 'Registration successful!'),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
+              left: 20,
+              right: 20,
+            ),
           ),
         );
         Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
@@ -328,7 +334,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else if (authProvider.error != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(authProvider.error!), backgroundColor: Colors.red),
+          content: Text(authProvider.error!),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
+            left: 20,
+            right: 20,
+          ),
+        ),
       );
     }
   }
